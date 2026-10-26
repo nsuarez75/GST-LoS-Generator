@@ -1,60 +1,125 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:GstLosGenerator.App.ViewModels"
+             xmlns:v="using:GstLosGenerator.App.Views"
+             xmlns:c="using:GstLosGenerator.App.Controls"
              xmlns:l="using:GstLosGenerator.App"
              x:Class="GstLosGenerator.App.Views.AssetsView"
              x:DataType="vm:AssetsViewModel">
-    <DockPanel>
-        <Border DockPanel.Dock="Top" Classes="toolbar">
-            <DockPanel>
-                <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                    <TextBlock Classes="h2" Text="{l:T 'Assets'}" VerticalAlignment="Center" />
-                    <TextBlock Classes="label" Text="{Binding Summary}" />
-                </StackPanel>
-                <StackPanel Classes="buttons" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
-                    <TextBox Text="{Binding Search}" PlaceholderText="{l:T 'Buscar asset, tipo, variable o dirección'}" Width="320" />
-                    <Button Content="{l:T 'Expandir'}" Command="{Binding ExpandAllCommand}" />
-                    <Button Content="{l:T 'Contraer'}" Command="{Binding CollapseAllCommand}" />
-                    <Button Content="{l:T 'Añadir asset…'}" Command="{Binding AddAssetCommand}" />
-                    <Button Content="{l:T 'Añadir variable'}" Command="{Binding AddVariableCommand}" />
-                    <Button Content="{l:T 'Eliminar'}" Click="OnRemove" />
-                </StackPanel>
-            </DockPanel>
-        </Border>
+    <!-- Las columnas de la derecha tienen ancho fijo (así cuadran a cualquier profundidad del árbol)
+         y se estrechan cuando la vista es estrecha (clase narrow, ver el código de la vista) -->
+    <UserControl.Styles>
+        <Style Selector=":is(Control).colType">
+            <Setter Property="Width" Value="220" />
+        </Style>
+        <Style Selector=":is(Control).colOp">
+            <Setter Property="Width" Value="150" />
+        </Style>
+        <Style Selector=":is(Control).colState">
+            <Setter Property="Width" Value="210" />
+        </Style>
+        <Style Selector="v|AssetsView.narrow :is(Control).colType">
+            <Setter Property="Width" Value="160" />
+        </Style>
+        <Style Selector="v|AssetsView.narrow :is(Control).colOp">
+            <Setter Property="Width" Value="105" />
+        </Style>
+        <Style Selector="v|AssetsView.narrow :is(Control).colState">
+            <Setter Property="Width" Value="150" />
+        </Style>
+    </UserControl.Styles>
 
-        <!-- Cabecera de columnas de los assets -->
-        <Grid DockPanel.Dock="Top" ColumnDefinitions="*,230,150,220" Margin="40,8,16,4">
-            <TextBlock Classes="columnHeader" Text="{l:T 'Asset · variable'}" />
-            <TextBlock Grid.Column="1" Classes="columnHeader" Text="{l:T 'Tipo · dato'}" />
-            <TextBlock Grid.Column="2" Classes="columnHeader" Text="{l:T 'Operación · sentido'}" />
-            <TextBlock Grid.Column="3" Classes="columnHeader" Text="{l:T 'Estado · dirección'}" />
+    <DockPanel Margin="24,20,24,16">
+        <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="12" Margin="0,0,0,12">
+            <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                <TextBlock Classes="h1" Text="{l:T 'Assets'}" />
+                <Border Classes="pill">
+                    <TextBlock Text="{Binding Summary}" />
+                </Border>
+            </StackPanel>
+            <WrapPanel Grid.Column="1" Orientation="Horizontal" ItemSpacing="6" LineSpacing="6" HorizontalAlignment="Right" VerticalAlignment="Center">
+                <Button Command="{Binding AddAssetCommand}" ToolTip.Tip="{l:T 'Añadir asset…'}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <c:Icon Kind="plus" />
+                        <TextBlock Text="{l:T 'Añadir asset…'}" Classes="barlabel" />
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding AddVariableCommand}" ToolTip.Tip="{l:T 'Añadir variable'}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <c:Icon Kind="list-plus" />
+                        <TextBlock Text="{l:T 'Añadir variable'}" Classes="barlabel" />
+                    </StackPanel>
+                </Button>
+                <Button Classes="danger" Click="OnRemove" ToolTip.Tip="{l:T 'Eliminar'}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <c:Icon Kind="trash" />
+                        <TextBlock Text="{l:T 'Eliminar'}" Classes="barlabel" />
+                    </StackPanel>
+                </Button>
+            </WrapPanel>
+
+            <Grid Grid.Row="1" Grid.ColumnSpan="2" ColumnSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MaxWidth="520" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBox Text="{Binding Search}" PlaceholderText="{l:T 'Buscar asset, tipo, variable o dirección'}">
+                    <TextBox.InnerLeftContent>
+                        <c:Icon Kind="search" Width="14" Height="14" Margin="10,0,0,0" Foreground="{DynamicResource App.TextMuted}" />
+                    </TextBox.InnerLeftContent>
+                </TextBox>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
+                    <Button Classes="ghost" Command="{Binding ExpandAllCommand}" ToolTip.Tip="{l:T 'Expandir'}">
+                        <c:Icon Kind="expand" />
+                    </Button>
+                    <Button Classes="ghost" Command="{Binding CollapseAllCommand}" ToolTip.Tip="{l:T 'Contraer'}">
+                        <c:Icon Kind="collapse" />
+                    </Button>
+                </StackPanel>
+            </Grid>
         </Grid>
 
-        <TreeView ItemsSource="{Binding Roots}" SelectedItem="{Binding Selected}" Margin="8,0,8,8">
-            <TreeView.DataTemplates>
-                <TreeDataTemplate DataType="vm:AssetNodeViewModel" ItemsSource="{Binding Children}">
-                    <Grid ColumnDefinitions="22,*,230,150,220" Height="30">
-                        <TextBlock Classes="label" Text="{Binding KindGlyph}" />
-                        <TextBlock Grid.Column="1" Text="{Binding Element}" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                        <ComboBox Grid.Column="2" ItemsSource="{Binding TypeNames}" SelectedItem="{Binding Type}" HorizontalAlignment="Stretch" Margin="0,0,8,0" />
-                        <ComboBox Grid.Column="3" ItemsSource="{Binding OperationChoices}" SelectedItem="{Binding Operation}" HorizontalAlignment="Stretch" Margin="0,0,8,0" />
-                        <TextBlock Grid.Column="4" Classes="badge" Text="{Binding Status}" TextTrimming="CharacterEllipsis" />
+        <Border Classes="card" Padding="0">
+            <DockPanel>
+                <!-- Cabecera de columnas de los assets -->
+                <Border DockPanel.Dock="Top" Classes="tablehead" Padding="46,10,9,8">
+                    <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+                        <TextBlock Classes="columnHeader" Text="{l:T 'ASSET · VARIABLE'}" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Grid.Column="1" Classes="columnHeader colType" Margin="0,0,8,0" Text="{l:T 'TIPO · DATO'}" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Grid.Column="2" Classes="columnHeader colOp" Margin="0,0,8,0" Text="{l:T 'OPERACIÓN · SENTIDO'}" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Grid.Column="3" Classes="columnHeader colState" Text="{l:T 'ESTADO · DIRECCIÓN'}" TextTrimming="CharacterEllipsis" />
                     </Grid>
-                </TreeDataTemplate>
-                <DataTemplate DataType="vm:VariableRowViewModel">
-                    <Grid ColumnDefinitions="22,*,230,150,220" Height="28">
-                        <TextBox Classes="cell" Grid.Column="1" Text="{Binding Name, UpdateSourceTrigger=LostFocus}" Margin="0,0,8,0" ToolTip.Tip="{Binding Description}" />
-                        <TextBox Classes="cell" Grid.Column="2" Text="{Binding DataType, UpdateSourceTrigger=LostFocus}" Margin="0,0,8,0" />
-                        <ComboBox Grid.Column="3" ItemsSource="{x:Static vm:VariableRowViewModel.Directions}" SelectedItem="{Binding Direction}" HorizontalAlignment="Stretch" Margin="0,0,8,0" />
-                        <TextBox Classes="cell mono" Grid.Column="4" Text="{Binding Address, UpdateSourceTrigger=LostFocus}" />
-                    </Grid>
-                </DataTemplate>
-            </TreeView.DataTemplates>
-            <TreeView.Styles>
-                <Style Selector="TreeViewItem" x:DataType="vm:AssetNodeViewModel">
-                    <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
-                </Style>
-            </TreeView.Styles>
-        </TreeView>
+                </Border>
+
+                <TreeView ItemsSource="{Binding Roots}" SelectedItem="{Binding Selected}" Margin="4,0,8,8" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                    <TreeView.DataTemplates>
+                        <TreeDataTemplate DataType="vm:AssetNodeViewModel" ItemsSource="{Binding Children}">
+                            <Grid ColumnDefinitions="22,*,Auto,Auto,Auto" Height="32">
+                                <TextBlock Classes="label" Text="{Binding KindGlyph}" />
+                                <TextBlock Grid.Column="1" Text="{Binding Element}" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                                           ToolTip.Tip="{Binding Element}" Margin="0,0,8,0" />
+                                <ComboBox Grid.Column="2" Classes="colType" ItemsSource="{Binding TypeNames}" SelectedItem="{Binding Type}" Margin="0,0,8,0" />
+                                <ComboBox Grid.Column="3" Classes="colOp" ItemsSource="{Binding OperationChoices}" SelectedItem="{Binding Operation}" Margin="0,0,8,0" />
+                                <TextBlock Grid.Column="4" Classes="badge colState" Text="{Binding Status}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Status}" />
+                            </Grid>
+                        </TreeDataTemplate>
+                        <DataTemplate DataType="vm:VariableRowViewModel">
+                            <Grid ColumnDefinitions="22,*,Auto,Auto,Auto" Height="30">
+                                <TextBox Classes="cell" Grid.Column="1" Text="{Binding Name, UpdateSourceTrigger=LostFocus}" Margin="0,0,8,0" ToolTip.Tip="{Binding Description}" />
+                                <TextBox Classes="cell colType" Grid.Column="2" Text="{Binding DataType, UpdateSourceTrigger=LostFocus}" Margin="0,0,8,0" />
+                                <ComboBox Grid.Column="3" Classes="colOp" ItemsSource="{x:Static vm:VariableRowViewModel.Directions}" SelectedItem="{Binding Direction}" Margin="0,0,8,0" />
+                                <TextBox Classes="cell mono colState" Grid.Column="4" Text="{Binding Address, UpdateSourceTrigger=LostFocus}" />
+                            </Grid>
+                        </DataTemplate>
+                    </TreeView.DataTemplates>
+                    <TreeView.Styles>
+                        <Style Selector="TreeViewItem" x:DataType="vm:AssetNodeViewModel">
+                            <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                        </Style>
+                    </TreeView.Styles>
+                </TreeView>
+            </DockPanel>
+        </Border>
     </DockPanel>
 </UserControl>

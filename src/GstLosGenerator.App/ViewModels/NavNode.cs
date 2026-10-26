@@ -30,15 +30,15 @@ public sealed partial class NavNode(NavKind kind, Plc? plc) : ObservableObject
     [ObservableProperty]
     public partial bool IsExpanded { get; set; } = true;
 
-    // Icono sencillo de texto por tipo de nodo, sin depender de fuentes de iconos.
-    public string Glyph => Kind switch
+    // Icono del nodo (ver Controls/Icon.cs).
+    public string Icon => Kind switch
     {
-        NavKind.Project => "▣",
-        NavKind.Plc => "▤",
-        NavKind.Devices => "⇄",
-        NavKind.Assets => "◇",
-        NavKind.Operations => "⚙",
-        _ => "⌖",
+        NavKind.Project => "box",
+        NavKind.Plc => "cpu",
+        NavKind.Devices => "replace",
+        NavKind.Assets => "layers",
+        NavKind.Operations => "list-checks",
+        _ => "map-pin",
     };
 
     public bool Matches(NavKind kind, string? plc) => Kind == kind && Plc?.Name == plc;

@@ -22,7 +22,7 @@ public sealed class MainWindowTests : IDisposable
     }
 
     // Ventana con un proyecto ya importado, una location y una operación.
-    private async Task<(MainWindow Window, MainViewModel Main, FakeDialogs Dialogs)> Open()
+    private async Task<(MainWindow Window, MainViewModel Main, FakeDialogs Dialogs)> Open(double width = 1400)
     {
         var session = new Session(Path.Combine(_dir, "catalogo.loscat"));
         var dialogs = new FakeDialogs();
@@ -51,7 +51,7 @@ public sealed class MainWindowTests : IDisposable
         }
         main.Rebuild();
 
-        var window = new MainWindow { Width = 1400, Height = 860 };
+        var window = new MainWindow { Width = width, Height = 860 };
         window.Attach(main);
         main.Dialogs = dialogs;
         window.Show();
@@ -91,14 +91,15 @@ public sealed class MainWindowTests : IDisposable
     }
 
     [AvaloniaTheory]
-    [InlineData(AppSettings.ThemeLight, L.Spanish)]
-    [InlineData(AppSettings.ThemeDark, L.English)]
-    public async Task Todas_las_pantallas_se_dibujan(string theme, string language)
+    [InlineData(AppSettings.ThemeLight, L.Spanish, 1400)]
+    [InlineData(AppSettings.ThemeDark, L.English, 1400)]
+    [InlineData(AppSettings.ThemeLight, L.Spanish, 900)]
+    public async Task Todas_las_pantallas_se_dibujan(string theme, string language, double width)
     {
         L.Language = language;
         App.ApplyTheme(theme);
-        var (window, main, _) = await Open();
-        var suffix = $"{theme}-{language}";
+        var (window, main, _) = await Open(width);
+        var suffix = $"{theme}-{language}-{width}";
 
         foreach (var kind in new[] { NavKind.Plc, NavKind.Devices, NavKind.Assets, NavKind.Operations, NavKind.Locations })
         {
@@ -108,12 +109,12 @@ public sealed class MainWindowTests : IDisposable
             Shot(window, $"{(int)kind:00}-{kind}-{suffix}");
         }
 
-        var catalog = new CatalogWindow { DataContext = new CatalogViewModel(main.Session, main.Dialogs), Width = 1100, Height = 720 };
+        var catalog = new CatalogWindow { DataContext = new CatalogViewModel(main.Session, main.Dialogs), Width = Math.Min(width, 1100), Height = 720 };
         catalog.Show();
         Shot(catalog, $"10-catalogo-{suffix}");
         catalog.Close();
 
-        var generate = new GenerateWindow { DataContext = new GenerateViewModel(main, main.Session.Project.Plcs[0]), Width = 1040, Height = 760 };
+        var generate = new GenerateWindow { DataContext = new GenerateViewModel(main, main.Session.Project.Plcs[0]), Width = Math.Min(width, 1040), Height = 760 };
         generate.Show();
         Shot(generate, $"11-generar-{suffix}");
         generate.Close();

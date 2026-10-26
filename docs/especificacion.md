@@ -17,13 +17,13 @@ La importación a TIA Portal queda fuera: la hará otra app con Openness, que ex
 - Tema claro y oscuro: por defecto sigue a Windows, con selector «Claro / Oscuro / Sistema» que se recuerda.
 - Idioma castellano/inglés: por defecto el de Windows, con selector. Solo cambia la interfaz; el código generado no cambia.
 - Ventana principal:
-  - Menú superior: Archivo, Editar, Proyecto, Generar, Ver y Ayuda.
+  - Barra superior: archivo (nuevo, abrir, guardar y más), deshacer y rehacer, las acciones del proyecto en orden (Importar LoS, Catálogo, Leer FB y Generar) y, a la derecha, idioma, tema y Acerca de. La interfaz se adapta al ancho de la ventana.
   - Panel izquierdo: árbol del proyecto (proyecto → PLCs → Devices, Assets, Operaciones, Locations).
   - Zona central: el editor de lo seleccionado.
   - Barra inferior de avisos: al pulsar uno, lleva a lo que lo provoca.
 - Assets en árbol (celda → asset de operación → sub-assets), con buscador. Cada asset se despliega y muestra sus variables con tipo de dato y dirección.
-- Catálogo de tipos en una ventana propia (*Proyecto → Catálogo de tipos…*): tipos a la izquierda y, a la derecha, sus variables y su equivalencia. Desde ahí se exporta e importa.
-- Atajos de teclado y además menú: guardar a mano (Ctrl+S), deshacer y rehacer (Ctrl+Z / Ctrl+Y) en todas las ediciones, y aviso al cerrar con cambios sin guardar. Al abrir, se reabre el último proyecto.
+- Catálogo de tipos en una ventana propia (botón *Catálogo* de la barra superior): tipos a la izquierda y, a la derecha, sus variables y su equivalencia. Desde ahí se exporta e importa.
+- Atajos de teclado y además botones: guardar a mano (Ctrl+S), deshacer y rehacer (Ctrl+Z / Ctrl+Y) en todas las ediciones, y aviso al cerrar con cambios sin guardar. Al abrir, se reabre el último proyecto.
 
 ## Archivos
 

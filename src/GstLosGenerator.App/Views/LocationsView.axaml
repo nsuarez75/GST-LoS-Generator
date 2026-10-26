@@ -1,36 +1,52 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:GstLosGenerator.App.ViewModels"
+             xmlns:c="using:GstLosGenerator.App.Controls"
              xmlns:l="using:GstLosGenerator.App"
              x:Class="GstLosGenerator.App.Views.LocationsView"
              x:DataType="vm:LocationsViewModel">
-    <DockPanel>
-        <Border DockPanel.Dock="Top" Classes="toolbar">
+    <DockPanel Margin="24,20">
+        <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" ColumnSpacing="12" Margin="0,0,0,8">
+            <TextBlock Classes="h1" Text="{l:T 'Locations'}" VerticalAlignment="Center" />
+            <WrapPanel Grid.Column="1" Orientation="Horizontal" ItemSpacing="8" LineSpacing="8" HorizontalAlignment="Right">
+                <Button Command="{Binding AddCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <c:Icon Kind="plus" />
+                        <TextBlock Text="{l:T 'Añadir'}" />
+                    </StackPanel>
+                </Button>
+                <Button Classes="danger" Command="{Binding RemoveCommand}" CommandParameter="{Binding Selected}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <c:Icon Kind="trash" />
+                        <TextBlock Text="{l:T 'Eliminar'}" />
+                    </StackPanel>
+                </Button>
+            </WrapPanel>
+        </Grid>
+        <TextBlock DockPanel.Dock="Top" Classes="muted" FontSize="12" Margin="0,0,0,14"
+                   Text="{l:T 'Cada location tiene un nombre (el que sale en el título de la operación) y un número (el que se escribe en Loc). Se definen una vez por PLC y se usan en varias operaciones.'}" />
+
+        <Border Classes="card" Padding="0">
             <DockPanel>
-                <TextBlock Classes="h2" Text="{l:T 'Locations'}" VerticalAlignment="Center" />
-                <StackPanel Classes="buttons" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
-                    <Button Content="{l:T 'Añadir'}" Command="{Binding AddCommand}" />
-                    <Button Content="{l:T 'Eliminar'}" Command="{Binding RemoveCommand}" CommandParameter="{Binding Selected}" />
-                </StackPanel>
+                <Border DockPanel.Dock="Top" Classes="tablehead">
+                    <Grid ColumnDefinitions="3*,90,4*" ColumnSpacing="10">
+                        <TextBlock Classes="columnHeader" Text="{l:T 'NOMBRE'}" />
+                        <TextBlock Grid.Column="1" Classes="columnHeader" Text="{l:T 'NÚMERO'}" />
+                        <TextBlock Grid.Column="2" Classes="columnHeader" Text="{l:T 'USADA EN OPERACIONES'}" />
+                    </Grid>
+                </Border>
+                <ListBox Classes="table" ItemsSource="{Binding Rows}" SelectedItem="{Binding Selected}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:LocationRowViewModel">
+                            <Grid ColumnDefinitions="3*,90,4*" ColumnSpacing="10">
+                                <TextBox Classes="cell mono" Text="{Binding Name, UpdateSourceTrigger=LostFocus}" />
+                                <TextBox Classes="cell" Grid.Column="1" Text="{Binding Number, UpdateSourceTrigger=LostFocus}" />
+                                <TextBlock Grid.Column="2" Text="{Binding UsedBy}" Classes="label" TextTrimming="CharacterEllipsis" />
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
             </DockPanel>
         </Border>
-        <TextBlock DockPanel.Dock="Top" Classes="muted" Margin="16,12"
-                   Text="{l:T 'Cada location tiene un nombre (el que sale en el título de la operación) y un número (el que se escribe en Loc). Se definen una vez por PLC y se usan en varias operaciones.'}" />
-        <Grid DockPanel.Dock="Top" ColumnDefinitions="300,120,*" Margin="28,4,16,4">
-            <TextBlock Classes="columnHeader" Text="{l:T 'Nombre'}" />
-            <TextBlock Grid.Column="1" Classes="columnHeader" Text="{l:T 'Número'}" />
-            <TextBlock Grid.Column="2" Classes="columnHeader" Text="{l:T 'Usada en operaciones'}" />
-        </Grid>
-        <ListBox ItemsSource="{Binding Rows}" SelectedItem="{Binding Selected}" Margin="8,0,8,8">
-            <ListBox.ItemTemplate>
-                <DataTemplate x:DataType="vm:LocationRowViewModel">
-                    <Grid ColumnDefinitions="300,120,*">
-                        <TextBox Classes="cell mono" Text="{Binding Name, UpdateSourceTrigger=LostFocus}" Margin="0,0,10,0" />
-                        <TextBox Classes="cell" Grid.Column="1" Text="{Binding Number, UpdateSourceTrigger=LostFocus}" Margin="0,0,10,0" />
-                        <TextBlock Grid.Column="2" Text="{Binding UsedBy}" Classes="label" />
-                    </Grid>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
     </DockPanel>
 </UserControl>
