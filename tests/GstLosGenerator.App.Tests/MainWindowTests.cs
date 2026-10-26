@@ -232,4 +232,21 @@ public sealed class MainWindowTests : IDisposable
 
         Assert.Contains("Acerca de: Creado por Ignacio Suarez. https://github.com/nsuarez75/GST-LoS-Generator", dialogs.Messages);
     }
+
+    [AvaloniaFact]
+    public async Task Avisa_si_hay_una_release_mas_nueva()
+    {
+        var (window, main, _) = await Open();
+
+        await main.CheckForUpdates(_ => Task.FromResult<ReleaseInfo?>(new ReleaseInfo("v99.0.0", new Version(99, 0, 0), "https://github.com/x/y/releases/tag/v99.0.0")));
+
+        Assert.True(main.HasUpdate);
+        Assert.Contains("v99.0.0", main.UpdateNotice);
+        Shot(window, "12-version-nueva");
+        main.DismissUpdateCommand.Execute(null);
+        Assert.False(main.HasUpdate);
+
+        await main.CheckForUpdates(_ => Task.FromResult<ReleaseInfo?>(null));
+        Assert.False(main.HasUpdate);
+    }
 }

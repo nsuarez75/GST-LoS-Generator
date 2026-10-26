@@ -267,6 +267,10 @@ public static partial class L
         ["{0} cambios"] = "{0} changes",
         ["Aplicar"] = "Apply",
 
+        // ---- versión nueva
+        ["Hay una versión nueva: {0} (tienes la {1})."] = "A new version is available: {0} (you have {1}).",
+        ["Descargar"] = "Download",
+
         // ---- archivos
         ["El archivo está vacío."] = "The file is empty.",
         ["{0} no tiene un formato válido: {1}"] = "{0} does not have a valid format: {1}",
