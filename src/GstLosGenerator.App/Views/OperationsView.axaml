@@ -1,0 +1,158 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:GstLosGenerator.App.ViewModels"
+             xmlns:l="using:GstLosGenerator.App"
+             x:Class="GstLosGenerator.App.Views.OperationsView"
+             x:DataType="vm:OperationsViewModel">
+    <Grid ColumnDefinitions="300,*">
+        <!-- Lista de operaciones -->
+        <Border BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}" BorderThickness="0,0,1,0">
+            <DockPanel>
+                <Border DockPanel.Dock="Top" Classes="toolbar">
+                    <DockPanel>
+                        <TextBlock Classes="h2" Text="{l:T 'Operaciones'}" VerticalAlignment="Center" />
+                        <StackPanel Classes="buttons" Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right">
+                            <Button Content="{l:T 'Nueva…'}" Command="{Binding AddCommand}" />
+                            <Button Content="{l:T 'Eliminar'}" Command="{Binding RemoveCommand}" />
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+                <TextBlock DockPanel.Dock="Top" Classes="muted" Margin="16" IsVisible="{Binding IsEmpty}"
+                           Text="{l:T 'No hay operaciones. Crea la primera con «Nueva…»; antes conviene definir las locations del PLC.'}" />
+                <ListBox ItemsSource="{Binding Operations}" SelectedItem="{Binding Selected}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:OperationViewModel">
+                            <StackPanel Spacing="2" Margin="0,2">
+                                <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{Binding Summary}" Classes="label" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+        </Border>
+
+        <!-- Ficha de la operación seleccionada -->
+        <ContentControl Grid.Column="1" Content="{Binding Selected}">
+            <ContentControl.ContentTemplate>
+                <DataTemplate x:DataType="vm:OperationViewModel">
+                    <Grid ColumnDefinitions="*,320">
+                        <ScrollViewer Grid.Column="0">
+                            <StackPanel Margin="20" Spacing="14">
+                                <StackPanel Orientation="Horizontal" Spacing="12">
+                                    <TextBlock Classes="label" Text="{l:T 'Número'}" />
+                                    <TextBox Text="{Binding Id, UpdateSourceTrigger=LostFocus}" Width="110" />
+                                    <TextBlock Text="{Binding Title}" Classes="muted" VerticalAlignment="Center" />
+                                </StackPanel>
+
+                                <DockPanel>
+                                    <TextBlock Classes="h2" Text="{l:T 'Locations'}" VerticalAlignment="Center" />
+                                    <Button HorizontalAlignment="Right" Content="{l:T 'Añadir location'}" Command="{Binding AddLocationCommand}" />
+                                </DockPanel>
+                                <TextBlock Classes="muted"
+                                           Text="{l:T 'Por cada location: las referencias que trabajan en ella (la máscara se calcula sola) y, por referencia, las señales de pieza presente y de clampas abiertas. Varias señales se separan con &amp; y se encadenan con Y; vacío sale alwaysFalse.'}" />
+
+                                <ItemsControl ItemsSource="{Binding Locations}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Spacing="10" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:OperationLocationViewModel">
+                                            <Border Classes="card">
+                                                <StackPanel Spacing="10">
+                                                    <DockPanel>
+                                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                                            <ComboBox ItemsSource="{Binding LocationNames}" SelectedItem="{Binding Name}" Width="220" />
+                                                            <TextBlock Text="{Binding LocNumber}" Classes="label" />
+                                                            <TextBlock Text="{Binding Mask}" Classes="label" />
+                                                        </StackPanel>
+                                                        <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Right">
+                                                            <Button Content="↑" ToolTip.Tip="{l:T 'Subir'}"
+                                                                    Command="{Binding $parent[ItemsControl].((vm:OperationViewModel)DataContext).MoveUpCommand}" CommandParameter="{Binding}" />
+                                                            <Button Content="↓" ToolTip.Tip="{l:T 'Bajar'}"
+                                                                    Command="{Binding $parent[ItemsControl].((vm:OperationViewModel)DataContext).MoveDownCommand}" CommandParameter="{Binding}" />
+                                                            <Button Content="{l:T 'Quitar'}"
+                                                                    Command="{Binding $parent[ItemsControl].((vm:OperationViewModel)DataContext).RemoveLocationCommand}" CommandParameter="{Binding}" />
+                                                        </StackPanel>
+                                                    </DockPanel>
+
+                                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                                        <TextBlock Classes="label" Text="{l:T 'Referencias'}" Width="110" />
+                                                        <ItemsControl ItemsSource="{Binding ReferenceToggles}">
+                                                            <ItemsControl.ItemsPanel>
+                                                                <ItemsPanelTemplate>
+                                                                    <StackPanel Orientation="Horizontal" Spacing="4" />
+                                                                </ItemsPanelTemplate>
+                                                            </ItemsControl.ItemsPanel>
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate x:DataType="vm:ReferenceToggleViewModel">
+                                                                    <ToggleButton Content="{Binding Label}" IsChecked="{Binding IsChecked}" Width="34" HorizontalContentAlignment="Center" />
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                    </StackPanel>
+
+                                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                                        <TextBlock Classes="label" Text="{l:T 'Location virtual'}" Width="110" />
+                                                        <TextBox Text="{Binding VirtualLoc, UpdateSourceTrigger=LostFocus}" Width="300" Classes="mono" PlaceholderText="alwaysFalse" />
+                                                    </StackPanel>
+
+                                                    <Grid ColumnDefinitions="110,*,*" ColumnSpacing="10">
+                                                        <TextBlock Grid.Column="1" Classes="columnHeader" Text="{l:T 'Pieza presente'}" />
+                                                        <TextBlock Grid.Column="2" Classes="columnHeader" Text="{l:T 'Clampas abiertas'}" />
+                                                    </Grid>
+                                                    <ItemsControl ItemsSource="{Binding References}">
+                                                        <ItemsControl.ItemsPanel>
+                                                            <ItemsPanelTemplate>
+                                                                <StackPanel Spacing="4" />
+                                                            </ItemsPanelTemplate>
+                                                        </ItemsControl.ItemsPanel>
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate x:DataType="vm:ReferenceRowViewModel">
+                                                                <Grid ColumnDefinitions="110,*,*" ColumnSpacing="10">
+                                                                    <TextBlock Classes="label" Text="{Binding Label}" />
+                                                                    <TextBox Grid.Column="1" Text="{Binding PartPresent, UpdateSourceTrigger=LostFocus}" Classes="mono" PlaceholderText="alwaysFalse" />
+                                                                    <TextBox Grid.Column="2" Text="{Binding ClampsOpen, UpdateSourceTrigger=LostFocus}" Classes="mono" PlaceholderText="alwaysFalse" />
+                                                                </Grid>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                    <Button Content="{l:T 'Copiar las señales de la primera referencia a las demás'}" Command="{Binding CopyFirstCommand}" />
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <!-- Assets que reciben la operación -->
+                        <Border Grid.Column="1" BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}" BorderThickness="1,0,0,0">
+                            <DockPanel Margin="12">
+                                <TextBlock DockPanel.Dock="Top" Classes="h2" Text="{l:T 'Assets con esta operación'}" Margin="0,0,0,8" />
+                                <TextBox DockPanel.Dock="Top" Text="{Binding AssetFilter}" PlaceholderText="{l:T 'Filtrar assets'}" Margin="0,0,0,8" />
+                                <ListBox ItemsSource="{Binding Assets}">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:AssetCheckViewModel">
+                                            <CheckBox IsChecked="{Binding IsChecked}">
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Element}" TextTrimming="CharacterEllipsis" />
+                                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                                        <TextBlock Text="{Binding Type}" Classes="label" />
+                                                        <TextBlock Text="{Binding Other}" Classes="badge" />
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </CheckBox>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </DockPanel>
+                        </Border>
+                    </Grid>
+                </DataTemplate>
+            </ContentControl.ContentTemplate>
+        </ContentControl>
+    </Grid>
+</UserControl>

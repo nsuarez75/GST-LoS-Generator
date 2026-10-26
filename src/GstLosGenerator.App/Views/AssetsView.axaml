@@ -1,0 +1,60 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:GstLosGenerator.App.ViewModels"
+             xmlns:l="using:GstLosGenerator.App"
+             x:Class="GstLosGenerator.App.Views.AssetsView"
+             x:DataType="vm:AssetsViewModel">
+    <DockPanel>
+        <Border DockPanel.Dock="Top" Classes="toolbar">
+            <DockPanel>
+                <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                    <TextBlock Classes="h2" Text="{l:T 'Assets'}" VerticalAlignment="Center" />
+                    <TextBlock Classes="label" Text="{Binding Summary}" />
+                </StackPanel>
+                <StackPanel Classes="buttons" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                    <TextBox Text="{Binding Search}" PlaceholderText="{l:T 'Buscar asset, tipo, variable o dirección'}" Width="320" />
+                    <Button Content="{l:T 'Expandir'}" Command="{Binding ExpandAllCommand}" />
+                    <Button Content="{l:T 'Contraer'}" Command="{Binding CollapseAllCommand}" />
+                    <Button Content="{l:T 'Añadir asset…'}" Command="{Binding AddAssetCommand}" />
+                    <Button Content="{l:T 'Añadir variable'}" Command="{Binding AddVariableCommand}" />
+                    <Button Content="{l:T 'Eliminar'}" Click="OnRemove" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- Cabecera de columnas de los assets -->
+        <Grid DockPanel.Dock="Top" ColumnDefinitions="*,230,150,220" Margin="40,8,16,4">
+            <TextBlock Classes="columnHeader" Text="{l:T 'Asset · variable'}" />
+            <TextBlock Grid.Column="1" Classes="columnHeader" Text="{l:T 'Tipo · dato'}" />
+            <TextBlock Grid.Column="2" Classes="columnHeader" Text="{l:T 'Operación · sentido'}" />
+            <TextBlock Grid.Column="3" Classes="columnHeader" Text="{l:T 'Estado · dirección'}" />
+        </Grid>
+
+        <TreeView ItemsSource="{Binding Roots}" SelectedItem="{Binding Selected}" Margin="8,0,8,8">
+            <TreeView.DataTemplates>
+                <TreeDataTemplate DataType="vm:AssetNodeViewModel" ItemsSource="{Binding Children}">
+                    <Grid ColumnDefinitions="22,*,230,150,220" Height="30">
+                        <TextBlock Classes="label" Text="{Binding KindGlyph}" />
+                        <TextBlock Grid.Column="1" Text="{Binding Element}" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                        <ComboBox Grid.Column="2" ItemsSource="{Binding TypeNames}" SelectedItem="{Binding Type}" HorizontalAlignment="Stretch" Margin="0,0,8,0" />
+                        <ComboBox Grid.Column="3" ItemsSource="{Binding OperationChoices}" SelectedItem="{Binding Operation}" HorizontalAlignment="Stretch" Margin="0,0,8,0" />
+                        <TextBlock Grid.Column="4" Classes="badge" Text="{Binding Status}" TextTrimming="CharacterEllipsis" />
+                    </Grid>
+                </TreeDataTemplate>
+                <DataTemplate DataType="vm:VariableRowViewModel">
+                    <Grid ColumnDefinitions="22,*,230,150,220" Height="28">
+                        <TextBox Classes="cell" Grid.Column="1" Text="{Binding Name, UpdateSourceTrigger=LostFocus}" Margin="0,0,8,0" ToolTip.Tip="{Binding Description}" />
+                        <TextBox Classes="cell" Grid.Column="2" Text="{Binding DataType, UpdateSourceTrigger=LostFocus}" Margin="0,0,8,0" />
+                        <ComboBox Grid.Column="3" ItemsSource="{x:Static vm:VariableRowViewModel.Directions}" SelectedItem="{Binding Direction}" HorizontalAlignment="Stretch" Margin="0,0,8,0" />
+                        <TextBox Classes="cell mono" Grid.Column="4" Text="{Binding Address, UpdateSourceTrigger=LostFocus}" />
+                    </Grid>
+                </DataTemplate>
+            </TreeView.DataTemplates>
+            <TreeView.Styles>
+                <Style Selector="TreeViewItem" x:DataType="vm:AssetNodeViewModel">
+                    <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                </Style>
+            </TreeView.Styles>
+        </TreeView>
+    </DockPanel>
+</UserControl>

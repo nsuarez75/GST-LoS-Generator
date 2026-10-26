@@ -1,0 +1,73 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:GstLosGenerator.App.ViewModels"
+             xmlns:l="using:GstLosGenerator.App"
+             x:Class="GstLosGenerator.App.Views.DevicesView"
+             x:DataType="vm:DevicesViewModel">
+    <Grid ColumnDefinitions="260,*">
+        <Border BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}" BorderThickness="0,0,1,0">
+            <DockPanel>
+                <Border DockPanel.Dock="Top" Classes="toolbar">
+                    <DockPanel>
+                        <TextBlock Classes="h2" Text="{l:T 'Devices'}" VerticalAlignment="Center" />
+                        <StackPanel Classes="buttons" Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right">
+                            <Button Content="{l:T 'Añadir'}" Command="{Binding AddCommand}" />
+                            <Button Content="{l:T 'Eliminar'}" Command="{Binding RemoveCommand}" />
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+                <TextBlock DockPanel.Dock="Top" Classes="muted" Margin="16" IsVisible="{Binding IsEmpty}"
+                           Text="{l:T 'Los devices salen de las hojas «PLCxx - OUT» de la LoS.'}" />
+                <ListBox ItemsSource="{Binding Devices}" SelectedItem="{Binding Selected}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:DeviceViewModel">
+                            <StackPanel Spacing="2" Margin="0,2">
+                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                                <TextBlock Text="{Binding Summary}" Classes="label" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+        </Border>
+
+        <ContentControl Grid.Column="1" Content="{Binding Selected}">
+            <ContentControl.ContentTemplate>
+                <DataTemplate x:DataType="vm:DeviceViewModel">
+                    <DockPanel>
+                        <Border DockPanel.Dock="Top" Classes="toolbar">
+                            <DockPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <TextBlock Classes="label" Text="{l:T 'Número'}" />
+                                    <TextBox Text="{Binding Number, UpdateSourceTrigger=LostFocus}" Width="70" />
+                                    <TextBlock Classes="label" Text="{l:T 'UDT'}" />
+                                    <TextBlock Text="{Binding Udt}" Classes="mono" VerticalAlignment="Center" />
+                                </StackPanel>
+                                <StackPanel Classes="buttons" Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right">
+                                    <Button Content="{l:T 'Añadir dirección'}" Command="{Binding AddAddressCommand}" />
+                                    <Button Content="{l:T 'Eliminar dirección'}" Command="{Binding RemoveAddressCommand}" />
+                                </StackPanel>
+                            </DockPanel>
+                        </Border>
+                        <Grid DockPanel.Dock="Top" ColumnDefinitions="300,140,*" Margin="28,8,16,4">
+                            <TextBlock Classes="columnHeader" Text="{l:T 'Dirección (miembro del UDT)'}" />
+                            <TextBlock Grid.Column="1" Classes="columnHeader" Text="{l:T 'Tipo en la LoS'}" />
+                            <TextBlock Grid.Column="2" Classes="columnHeader" Text="{l:T 'Tipo en TIA'}" />
+                        </Grid>
+                        <ListBox ItemsSource="{Binding Addresses}" SelectedItem="{Binding SelectedAddress}" Margin="8,0,8,8">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate x:DataType="vm:AddressRowViewModel">
+                                    <Grid ColumnDefinitions="300,140,*">
+                                        <TextBox Classes="cell mono" Text="{Binding Name, UpdateSourceTrigger=LostFocus}" Margin="0,0,10,0" />
+                                        <ComboBox Grid.Column="1" ItemsSource="{Binding DataTypeChoices}" SelectedItem="{Binding DataType}" HorizontalAlignment="Stretch" Margin="0,0,10,0" />
+                                        <TextBlock Grid.Column="2" Text="{Binding TiaType}" Classes="label" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </DockPanel>
+                </DataTemplate>
+            </ContentControl.ContentTemplate>
+        </ContentControl>
+    </Grid>
+</UserControl>
