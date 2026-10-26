@@ -1,0 +1,67 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:GstLosGenerator.App.ViewModels"
+             xmlns:l="using:GstLosGenerator.App"
+             x:Class="GstLosGenerator.App.Views.ProjectEditorView"
+             x:DataType="vm:ProjectEditorViewModel">
+    <ScrollViewer>
+        <StackPanel Margin="24" Spacing="18" MaxWidth="980" HorizontalAlignment="Left">
+            <TextBlock Classes="h1" Text="{l:T 'Proyecto'}" />
+
+            <Grid ColumnDefinitions="160,*,Auto" RowDefinitions="Auto,Auto,Auto" RowSpacing="10" ColumnSpacing="12">
+                <TextBlock Classes="label" Text="{l:T 'Nombre'}" />
+                <TextBox Grid.Column="1" Text="{Binding Name, UpdateSourceTrigger=LostFocus}" />
+
+                <TextBlock Grid.Row="1" Classes="label" Text="{l:T 'Última LoS importada'}" />
+                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding LosFile}" VerticalAlignment="Center" />
+                <Button Grid.Row="1" Grid.Column="2" Content="{l:T 'Importar LoS…'}" Command="{Binding Host.ImportLosCommand}" />
+
+                <TextBlock Grid.Row="2" Classes="label" Text="{l:T 'Carpeta de salida'}" />
+                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding OutputFolder, UpdateSourceTrigger=LostFocus}" Classes="mono" />
+                <Button Grid.Row="2" Grid.Column="2" Content="{l:T 'Elegir…'}" Command="{Binding PickOutputFolderCommand}" />
+            </Grid>
+
+            <DockPanel>
+                <TextBlock Classes="h2" Text="{l:T 'PLCs'}" VerticalAlignment="Center" />
+                <StackPanel Classes="buttons" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                    <Button Content="{l:T 'Añadir PLC…'}" Command="{Binding Host.AddPlcCommand}" />
+                    <Button Content="{l:T 'Catálogo de tipos…'}" Command="{Binding Host.OpenCatalogCommand}" />
+                </StackPanel>
+            </DockPanel>
+
+            <TextBlock Classes="muted" IsVisible="{Binding IsEmpty}"
+                       Text="{l:T 'Todavía no hay PLCs. Importa una LoS (Archivo → Importar LoS…) o añade uno a mano.'}" />
+
+            <Border Classes="card" Padding="0" IsVisible="{Binding !IsEmpty}">
+                <StackPanel>
+                    <Grid ColumnDefinitions="140,80,90,90,110,*" Margin="12,8">
+                        <TextBlock Classes="columnHeader" Text="{l:T 'PLC'}" />
+                        <TextBlock Grid.Column="1" Classes="columnHeader" Text="{l:T 'Número'}" />
+                        <TextBlock Grid.Column="2" Classes="columnHeader" Text="{l:T 'Devices'}" />
+                        <TextBlock Grid.Column="3" Classes="columnHeader" Text="{l:T 'Assets'}" />
+                        <TextBlock Grid.Column="4" Classes="columnHeader" Text="{l:T 'Operaciones'}" />
+                        <TextBlock Grid.Column="5" Classes="columnHeader" Text="{l:T 'FB actual'}" />
+                    </Grid>
+                    <ListBox ItemsSource="{Binding Plcs}" Background="Transparent">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:PlcSummary">
+                                <Grid ColumnDefinitions="140,80,90,90,110,*" Background="Transparent"
+                                      DoubleTapped="OnPlcDoubleTapped">
+                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Number}" />
+                                    <TextBlock Grid.Column="2" Text="{Binding Devices}" />
+                                    <TextBlock Grid.Column="3" Text="{Binding Assets}" />
+                                    <TextBlock Grid.Column="4" Text="{Binding Operations}" />
+                                    <TextBlock Grid.Column="5" Text="{Binding CurrentFb}" TextTrimming="CharacterEllipsis" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </StackPanel>
+            </Border>
+
+            <TextBlock Classes="muted"
+                       Text="{l:T 'Flujo de trabajo: importa la LoS, completa en el catálogo la equivalencia de cada tipo con su FB y UDT, crea locations y operaciones en cada PLC, y genera. Cuando el FB ya esté en TIA, expórtalo y usa «Leer FB» antes de volver a generar para no perder lo programado a mano.'}" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

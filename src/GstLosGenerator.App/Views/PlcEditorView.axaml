@@ -1,0 +1,40 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:GstLosGenerator.App.ViewModels"
+             xmlns:l="using:GstLosGenerator.App"
+             x:Class="GstLosGenerator.App.Views.PlcEditorView"
+             x:DataType="vm:PlcEditorViewModel">
+    <ScrollViewer>
+        <StackPanel Margin="24" Spacing="18" MaxWidth="980" HorizontalAlignment="Left">
+            <DockPanel>
+                <TextBlock Classes="h1" Text="{Binding Name}" />
+                <StackPanel Classes="buttons" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                    <Button Content="{l:T 'Leer FB…'}" Command="{Binding ReadFbCommand}" />
+                    <Button Classes="accent" Content="{l:T 'Generar FB y UDT…'}" Command="{Binding GenerateCommand}" />
+                </StackPanel>
+            </DockPanel>
+            <TextBlock Classes="muted" Text="{Binding Summary}" />
+
+            <Grid ColumnDefinitions="160,*,Auto" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="10" ColumnSpacing="12">
+                <TextBlock Classes="label" Text="{l:T 'Nombre (como en la LoS)'}" />
+                <TextBox Grid.Column="1" Text="{Binding Name, UpdateSourceTrigger=LostFocus}" MaxWidth="240" HorizontalAlignment="Left" Width="240" />
+
+                <TextBlock Grid.Row="1" Classes="label" Text="{l:T 'Número'}" />
+                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Number, UpdateSourceTrigger=LostFocus}" Width="80" HorizontalAlignment="Left" />
+
+                <TextBlock Grid.Row="2" Classes="label" Text="{l:T 'Devices'}" />
+                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding DeviceNames}" VerticalAlignment="Center" Classes="mono" />
+
+                <TextBlock Grid.Row="3" Classes="label" Text="{l:T 'FB actual'}" />
+                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding CurrentFb}" VerticalAlignment="Center" TextWrapping="Wrap" />
+                <Button Grid.Row="3" Grid.Column="2" Content="{l:T 'Olvidar'}" Command="{Binding ForgetFbCommand}" IsVisible="{Binding HasCurrentFb}" />
+            </Grid>
+
+            <TextBlock Classes="muted"
+                       Text="{l:T 'El FB actual es el último leído con «Leer FB». Al generar, se parte de él: lo que falta se añade y solo se reescribe lo que marques. Sin FB actual, el FB se genera desde cero.'}" />
+
+            <Border Height="1" Background="{DynamicResource SystemControlForegroundBaseLowBrush}" />
+            <Button Content="{l:T 'Quitar este PLC del proyecto…'}" Command="{Binding RemoveCommand}" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

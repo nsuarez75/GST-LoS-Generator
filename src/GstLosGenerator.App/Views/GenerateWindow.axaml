@@ -1,0 +1,93 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:GstLosGenerator.App.ViewModels"
+        xmlns:core="using:GstLosGenerator.Core"
+        xmlns:l="using:GstLosGenerator.App"
+        x:Class="GstLosGenerator.App.Views.GenerateWindow"
+        x:DataType="vm:GenerateViewModel"
+        Title="{l:T 'Generar FB y UDT'}"
+        Width="1040" Height="760" MinWidth="860" MinHeight="560"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False">
+    <DockPanel>
+        <Border DockPanel.Dock="Top" Classes="toolbar">
+            <Grid ColumnDefinitions="Auto,200,*,Auto" ColumnSpacing="12">
+                <TextBlock Classes="h2" Text="{l:T 'Generar'}" VerticalAlignment="Center" />
+                <ComboBox Grid.Column="1" ItemsSource="{Binding Plcs}" SelectedItem="{Binding Plc}" HorizontalAlignment="Stretch">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="core:Plc">
+                            <TextBlock Text="{Binding Name}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                <StackPanel Grid.Column="2" Spacing="2" VerticalAlignment="Center">
+                    <TextBlock Classes="label" Text="{l:T 'FB actual'}" />
+                    <TextBlock Text="{Binding CurrentFb}" TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+                <Button Grid.Column="3" Content="{l:T 'Leer FB…'}" Command="{Binding ReadFbCommand}" />
+            </Grid>
+        </Border>
+
+        <Border DockPanel.Dock="Bottom" BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}" BorderThickness="0,1,0,0" Padding="16,10">
+            <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="10">
+                <TextBlock Classes="label" Text="{l:T 'Carpeta de salida'}" />
+                <TextBox Grid.Column="1" Text="{Binding OutputFolder, UpdateSourceTrigger=LostFocus}" Classes="mono" />
+                <Button Grid.Column="2" Content="{l:T 'Elegir…'}" Command="{Binding PickFolderCommand}" />
+                <Button Grid.Column="3" Classes="accent" Content="{l:T 'Generar'}" Command="{Binding GenerateCommand}" IsEnabled="{Binding !IsBusy}" IsDefault="True" />
+                <Button Grid.Column="4" Content="{l:T 'Cerrar'}" Click="OnClose" IsCancel="True" />
+            </Grid>
+        </Border>
+
+        <Grid ColumnDefinitions="*,380">
+            <!-- Assets -->
+            <DockPanel Margin="16,12,8,12">
+                <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                    <TextBlock Classes="h2" Text="{l:T 'Assets que se reescriben'}" VerticalAlignment="Center" />
+                    <StackPanel Classes="buttons" Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right">
+                        <Button Content="{l:T 'Todos'}" Command="{Binding MarkAllCommand}" />
+                        <Button Content="{l:T 'Ninguno'}" Command="{Binding MarkNoneCommand}" />
+                    </StackPanel>
+                </DockPanel>
+                <TextBlock DockPanel.Dock="Top" Classes="muted" Margin="0,0,0,8"
+                           Text="{l:T 'Lo que falta en el FB actual se añade siempre. De lo que ya está, solo se reescriben las partes marcadas a la derecha de los assets marcados aquí; lo programado a mano se conserva.'}" />
+                <ListBox ItemsSource="{Binding Assets}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:GenerateAssetViewModel">
+                            <StackPanel Orientation="Horizontal" Spacing="10" Margin="{Binding Indent}">
+                                <CheckBox IsChecked="{Binding IsChecked}">
+                                    <!-- Como texto, para que los _ del nombre no se tomen como atajos de teclado -->
+                                    <TextBlock Text="{Binding Element}" />
+                                </CheckBox>
+                                <TextBlock Text="{Binding Note}" Classes="label" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+
+            <!-- Partes y avisos -->
+            <Border Grid.Column="1" BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}" BorderThickness="1,0,0,0">
+                <ScrollViewer>
+                    <StackPanel Margin="16,12" Spacing="8">
+                        <TextBlock Classes="h2" Text="{l:T 'Partes que se reescriben'}" />
+                        <CheckBox Content="{l:T 'Declaraciones de la estática'}" IsChecked="{Binding Static}" />
+                        <CheckBox Content="{l:T 'Segmentos de operaciones'}" IsChecked="{Binding Operations}" />
+                        <CheckBox Content="{l:T 'Llamadas a los assets'}" IsChecked="{Binding Calls}" />
+                        <CheckBox Content="{l:T 'Struct TO DEVICE'}" IsChecked="{Binding Struct}" />
+                        <CheckBox Content="{l:T 'Swaps (Float y enteros)'}" IsChecked="{Binding Swaps}" />
+                        <Border Height="1" Margin="0,4" Background="{DynamicResource SystemControlForegroundBaseLowBrush}" />
+                        <CheckBox Content="{l:T 'Escribir los UDT de los devices'}" IsChecked="{Binding Udts}" />
+
+                        <TextBlock Classes="h2" Text="{l:T 'Avisos'}" Margin="0,12,0,0" />
+                        <ItemsControl ItemsSource="{Binding Notes}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="x:String">
+                                    <TextBlock Text="{Binding}" Classes="muted" Margin="0,2" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+    </DockPanel>
+</Window>
