@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/GstLosGenerator.Core/GstLosGenerator.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/GstLosGenerator.Tests/GstLosGenerator.Tests.csproj" />
+  </Folder>
+</Solution>
