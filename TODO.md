@@ -27,3 +27,8 @@
 - El catálogo de tipos se puede exportar e importar como archivo.
 - Se pueden crear a mano PLCs, assets, devices y direcciones, sin LoS.
 - Validaciones al generar (operación sin locations o sin assets, asset sin equivalencia, dirección repetida): aviso con la lista, y se deja generar.
+- Al regenerar la llamada de un asset solo se reescribe lo de la app: título, FB llamado, instancia, pin `Operation` y pin del UDT. La lógica y los pines conectados a mano se conservan. Si el FB nuevo ya no tiene un pin que estaba conectado, se avisa y no se regenera ese segmento sin confirmación.
+- Assets manuales: la LoS nueva no los marca como desaparecidos. Si la LoS trae uno con el mismo nombre, manda la LoS (con resumen de cambios) y deja de ser manual.
+- Guardado manual con Ctrl+S, aviso al cerrar con cambios sin guardar, deshacer y rehacer (Ctrl+Z / Ctrl+Y) y reapertura del último proyecto. Atajos de teclado y además menú superior (Archivo, Editar…).
+- Extensiones: proyecto `.losproj` y catálogo de tipos exportado `.loscat`.
+- UDT: `Bool`→`Bool`, `Byte`→`Byte`, `Int16`→`Int`, `Int32`→`DInt`, `Int64`→`ULInt`, `Float`→`Real`, `String`→`Array[1..20] of Char`, `StringNN`→`Array[1..NN] of Char`. Lleva todas las direcciones de la hoja del PLC, con los nombres de la hoja OUT.
