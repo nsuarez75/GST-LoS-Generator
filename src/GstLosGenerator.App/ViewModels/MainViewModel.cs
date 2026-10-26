@@ -465,9 +465,35 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private Task About() => Dialogs.About(L.T("Acerca de"), L.T("Creado por Ignacio Suarez."), RepositoryUrl);
+    private Task About() => Dialogs.About(L.T("Acerca de"), L.T("Creado por Ignacio Suarez."), UpdateCheck.RepositoryUrl);
 
-    public const string RepositoryUrl = "https://github.com/nsuarez75/GST-LoS-Generator";
+    // ---------------------------------------------------------------- versión nueva
+
+    public static Version CurrentVersion => typeof(MainViewModel).Assembly.GetName().Version ?? new Version(0, 0, 0);
+
+    // Al abrir: si en GitHub hay una release más nueva que esta versión, se avisa en una barra arriba.
+    public async Task CheckForUpdates(Func<CancellationToken, Task<ReleaseInfo?>> latest)
+    {
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        var release = await latest(timeout.Token);
+        if (release is not null && UpdateCheck.IsNewer(release, CurrentVersion))
+        {
+            UpdateUrl = new Uri(release.Url);
+            UpdateNotice = L.T("Hay una versión nueva: {0} (tienes la {1}).", release.Tag, CurrentVersion.ToString(3));
+        }
+    }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasUpdate))]
+    public partial string? UpdateNotice { get; set; }
+
+    [ObservableProperty]
+    public partial Uri? UpdateUrl { get; set; }
+
+    public bool HasUpdate => UpdateNotice is not null;
+
+    [RelayCommand]
+    private void DismissUpdate() => UpdateNotice = null;
 }
 
 // Editores que saben ir a un elemento concreto (desde la barra de avisos).

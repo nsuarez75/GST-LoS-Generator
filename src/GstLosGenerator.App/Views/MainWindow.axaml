@@ -65,6 +65,18 @@
             <MenuItem Header="{l:T 'Acerca de'}" Command="{Binding AboutCommand}" />
         </Menu>
 
+        <!-- Aviso de versión nueva -->
+        <Border DockPanel.Dock="Top" IsVisible="{Binding HasUpdate}" Padding="16,6"
+                Background="{DynamicResource SystemControlBackgroundBaseLowBrush}">
+            <DockPanel>
+                <Button DockPanel.Dock="Right" Content="✕" Command="{Binding DismissUpdateCommand}" Padding="8,2" ToolTip.Tip="{l:T 'Cerrar'}" />
+                <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding UpdateNotice}" VerticalAlignment="Center" />
+                    <HyperlinkButton Content="{l:T 'Descargar'}" NavigateUri="{Binding UpdateUrl}" Padding="0" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
         <!-- Barra de avisos -->
         <Border DockPanel.Dock="Bottom" BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}" BorderThickness="0,1,0,0">
             <Expander x:Name="IssuesExpander" HorizontalAlignment="Stretch" Padding="0" CornerRadius="0">

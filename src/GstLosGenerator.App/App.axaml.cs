@@ -46,6 +46,11 @@ public partial class App : Application
                 fresh.Show();
                 old.CloseSilently();
             };
+            window.Opened += async (_, _) =>
+            {
+                using var http = new HttpClient();
+                await main.CheckForUpdates(cancel => UpdateCheck.LatestRelease(http, cancel));
+            };
             if (settings.LastProject is { } last && File.Exists(last))
             {
                 _ = main.OpenPath(last);
