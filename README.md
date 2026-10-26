@@ -16,4 +16,4 @@ La carpeta `Datos Ejemplo/` (LoS, UDT y FB exportados de TIA Portal) está en `.
 
 ## Comprobaciones
 
-`./checks.sh` compila y pasa los tests (se crea junto con la solución). Sin `./checks.sh` en verde no hay commit ni PR.
+`./checks.sh` (desde Git Bash) compila con los avisos como errores y pasa todos los tests. Sin `./checks.sh` en verde no hay commit ni PR.
