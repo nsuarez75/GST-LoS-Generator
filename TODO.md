@@ -22,3 +22,8 @@
 - Estática: variable de cada asset con su UDT y el nombre completo (`LX9_01_…`); instancia del FB sin el prefijo de línea, es decir, hasta el primer `_` (`01_…`); operaciones `Operation_<n>` de tipo `I40_FixtureCfg_UDT`.
 - Orden del FB: Config Signals (vacío) → cabecera Setup Operations → operaciones por número → cabecera Call all blocks → llamadas en el orden de la LoS → Life bit (`clock1Hz` → `LifeBit`) → separador → Struct TO DEVICE → separador → SWAP Float → SWAP. Los pines que no salen de la LoS quedan sin conectar.
 - Struct TO DEVICE como el segmento 118 del ejemplo: `General` → celda → `CELLxx_Estado` + una sub-región por asset de operación. Las sub-regiones manuales se conservan; solo se reescriben las que la app reconoce por nombre.
+- «Leer FB» saca del FB las operaciones (número, locations, `Loc`, `Mask`, `VirtualLoc`, señales), la operación de cada asset y el FB y UDT que llama cada asset. Muestra un resumen de diferencias, lo del FB gana, y el FB queda guardado como «FB actual» del PLC. Se conserva la lógica cableada a mano a los bloques de los assets.
+- Cambiar el tipo de un asset mantiene sus variables y direcciones de la LoS; si alguna no existe en el tipo nuevo, se avisa.
+- El catálogo de tipos se puede exportar e importar como archivo.
+- Se pueden crear a mano PLCs, assets, devices y direcciones, sin LoS.
+- Validaciones al generar (operación sin locations o sin assets, asset sin equivalencia, dirección repetida): aviso con la lista, y se deja generar.
