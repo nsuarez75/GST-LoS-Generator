@@ -1,0 +1,12 @@
+# Datos reales de fábrica: solo sirven para ver el formato, nunca entran en el repo
+Datos Ejemplo/
+
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+.idea/
+TestResults/
+publish/
