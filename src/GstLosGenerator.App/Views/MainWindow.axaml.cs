@@ -51,6 +51,8 @@ public partial class MainWindow : Window, IDialogs
 
     public Task Message(string title, string text) => DialogWindow.Message(this, title, text);
 
+    public Task About(string title, string text, string link) => DialogWindow.About(this, title, text, link);
+
     public Task<bool> Confirm(string title, string text, string accept) => DialogWindow.Confirm(this, title, text, accept);
 
     public Task<SaveChoice> AskSave() => DialogWindow.AskSave(this);

@@ -15,6 +15,9 @@ public interface IDialogs
 {
     Task Message(string title, string text);
 
+    // Texto con un enlace que se abre en el navegador.
+    Task About(string title, string text, string link);
+
     Task<bool> Confirm(string title, string text, string accept);
 
     Task<SaveChoice> AskSave();

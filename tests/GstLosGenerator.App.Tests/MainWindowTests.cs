@@ -222,4 +222,14 @@ public sealed class MainWindowTests : IDisposable
         var assets = Assert.IsType<AssetsViewModel>(main.Editor);
         Assert.Equal("LX9_76_PLC01", Assert.IsType<AssetNodeViewModel>(assets.Selected).Element);
     }
+
+    [AvaloniaFact]
+    public async Task Acerca_de_muestra_el_autor()
+    {
+        var (_, main, dialogs) = await Open();
+
+        await main.AboutCommand.ExecuteAsync(null);
+
+        Assert.Contains("Acerca de: Creado por Ignacio Suarez. https://github.com/nsuarez75/GST-LoS-Generator", dialogs.Messages);
+    }
 }

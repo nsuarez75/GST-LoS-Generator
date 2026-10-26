@@ -53,6 +53,16 @@ public sealed class DialogWindow : Window
         await dialog.ShowDialog(owner);
     }
 
+    public static async Task About(Window owner, string title, string text, string link)
+    {
+        var panel = new StackPanel { Spacing = 8 };
+        panel.Children.Add(Text(text));
+        panel.Children.Add(new HyperlinkButton { Content = link, NavigateUri = new Uri(link), Padding = new Thickness(0) });
+        var dialog = new DialogWindow(title, panel, 480);
+        dialog.AddButton(L.T("Aceptar"), dialog.Close, isDefault: true, isCancel: true);
+        await dialog.ShowDialog(owner);
+    }
+
     public static async Task<bool> Confirm(Window owner, string title, string text, string accept)
     {
         var result = false;

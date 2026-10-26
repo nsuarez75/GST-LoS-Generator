@@ -465,8 +465,9 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private Task About() => Dialogs.Message(L.T("Acerca de"),
-        L.T("GST LoS Generator {0}\nGenera el FB y los UDT de TIA Portal a partir de una LoS.", typeof(MainViewModel).Assembly.GetName().Version?.ToString(3) ?? ""));
+    private Task About() => Dialogs.About(L.T("Acerca de"), L.T("Creado por Ignacio Suarez."), RepositoryUrl);
+
+    public const string RepositoryUrl = "https://github.com/nsuarez75/GST-LoS-Generator";
 }
 
 // Editores que saben ir a un elemento concreto (desde la barra de avisos).

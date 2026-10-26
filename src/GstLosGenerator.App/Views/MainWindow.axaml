@@ -62,9 +62,7 @@
                               Command="{Binding SetLanguageCommand}" CommandParameter="en" />
                 </MenuItem>
             </MenuItem>
-            <MenuItem Header="{l:T 'A_yuda'}">
-                <MenuItem Header="{l:T 'Acerca de'}" Command="{Binding AboutCommand}" />
-            </MenuItem>
+            <MenuItem Header="{l:T 'Acerca de'}" Command="{Binding AboutCommand}" />
         </Menu>
 
         <!-- Barra de avisos -->

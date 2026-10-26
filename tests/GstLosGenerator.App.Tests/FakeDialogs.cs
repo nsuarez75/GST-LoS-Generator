@@ -18,6 +18,8 @@ internal sealed class FakeDialogs : IDialogs
         return Task.CompletedTask;
     }
 
+    public Task About(string title, string text, string link) => Message(title, text + " " + link);
+
     public Task<bool> Confirm(string title, string text, string accept) => Task.FromResult(ConfirmAnswer);
 
     public Task<SaveChoice> AskSave() => Task.FromResult(SaveChoice.Discard);
