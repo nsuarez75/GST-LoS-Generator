@@ -12,6 +12,8 @@ public static class Storage
     private static readonly JsonSerializerOptions Options = new()
     {
         WriteIndented = true,
+        // Señales como ++1000+FIX01-PP01 se guardan legibles, sin escapar el +.
+        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         Converters = { new JsonStringEnumConverter() },

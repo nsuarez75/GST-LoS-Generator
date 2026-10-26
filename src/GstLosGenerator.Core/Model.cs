@@ -1,4 +1,6 @@
 // Modelo de datos de un proyecto y del catálogo de tipos. Es lo que se guarda en .losproj y .loscat.
+using System.Text.Json.Serialization;
+
 namespace GstLosGenerator.Core;
 
 public sealed class Project
@@ -93,6 +95,7 @@ public sealed class AssetVariable
     public string Address { get; set; } = "";
     public string Description { get; set; } = "";
 
+    [JsonIgnore]
     public bool IsOutput => Direction.Equals("OUT", StringComparison.OrdinalIgnoreCase);
 }
 
@@ -108,6 +111,7 @@ public sealed class Operation
     public string Id { get; set; } = "";
     public List<OperationLocation> Locations { get; set; } = [];
 
+    [JsonIgnore]
     public string VariableName => "Operation_" + Id;
 }
 
@@ -119,6 +123,7 @@ public sealed class OperationLocation
     public List<ReferenceSignals> References { get; set; } = [];
 
     // Cada referencia es un bit: la 1 vale 1, la 2 vale 2, la 3 vale 4...
+    [JsonIgnore]
     public long Mask => References.Aggregate(0L, (m, r) => m | (1L << (r.Reference - 1)));
 }
 
@@ -155,6 +160,7 @@ public sealed class AssetType
     // Interfaz completa del FB, aprendida al leer un FB. Vacía si no se conoce.
     public List<FbParameter> Parameters { get; set; } = [];
 
+    [JsonIgnore]
     public bool HasEquivalence => Fb.Length > 0 && Udt.Length > 0 && UdtPin.Length > 0;
 }
 
