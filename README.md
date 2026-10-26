@@ -2,11 +2,12 @@
 
 Aplicación de escritorio (.NET 10 + Avalonia) que lee una LoS (Excel de señales I4.0) y genera el código de PLC para TIA Portal: el FB con la declaración de variables, los segmentos de operaciones y de assets, el paso de struct a device y los swap, además de un UDT por cada device de cada PLC.
 
-> Estado: en definición. Las decisiones de producto se están cerrando en una entrevista; ver `TODO.md`.
+> Estado: especificación cerrada (`docs/especificacion.md`); en desarrollo.
 
 ## Documentación
 
 - `GLOSSARY.md`: vocabulario del proyecto. Léelo antes de nombrar cosas.
+- `docs/especificacion.md`: qué hace la app, acordado en la entrevista inicial.
 - `TODO.md`: pendientes.
 
 ## Datos de ejemplo
