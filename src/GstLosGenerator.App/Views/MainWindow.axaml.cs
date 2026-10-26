@@ -8,6 +8,9 @@ namespace GstLosGenerator.App.Views;
 // Ventana principal. También hace de IDialogs: los diálogos se abren sobre ella.
 public partial class MainWindow : Window, IDialogs
 {
+    // Por debajo de este ancho los botones de la barra superior se quedan solo con el icono.
+    private const double NarrowWidth = 1180;
+
     private bool _closeConfirmed;
 
     public MainWindow()
@@ -15,6 +18,19 @@ public partial class MainWindow : Window, IDialogs
         InitializeComponent();
         ExitItem.Click += (_, _) => Close();
         Closing += OnClosing;
+        SizeChanged += (_, e) => SetNarrow(e.NewSize.Width < NarrowWidth);
+    }
+
+    // Ventana estrecha: botones de la barra solo con icono y lateral más estrecho. El lateral solo cambia
+    // al cruzar el umbral, para no deshacer lo que el usuario haya ajustado con el separador.
+    private void SetNarrow(bool narrow)
+    {
+        if (Classes.Contains("narrow") == narrow)
+        {
+            return;
+        }
+        Classes.Set("narrow", narrow);
+        Body.ColumnDefinitions[0].Width = new GridLength(narrow ? 230 : 260);
     }
 
     public MainViewModel? ViewModel => DataContext as MainViewModel;

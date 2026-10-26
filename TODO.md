@@ -10,4 +10,6 @@ La especificación está en `docs/especificacion.md`.
 - [x] Generar los UDT de los devices.
 - [x] Generar el FB desde cero.
 - [x] Leer FB y generar sobre el FB actual sin perder lo hecho a mano.
+- [x] Interfaz renovada y adaptable al ancho de la ventana, con icono propio.
+- [x] La ficha de una operación ya no se corta al elegir locations en ventanas estrechas.
 - [ ] Probar la importación del FB generado en TIA con la app de Openness.

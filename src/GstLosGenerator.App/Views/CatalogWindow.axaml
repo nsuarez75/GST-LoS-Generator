@@ -1,46 +1,71 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:GstLosGenerator.App.ViewModels"
+        xmlns:c="using:GstLosGenerator.App.Controls"
         xmlns:l="using:GstLosGenerator.App"
         x:Class="GstLosGenerator.App.Views.CatalogWindow"
+        Icon="/Assets/gst-los-generator.png"
         x:DataType="vm:CatalogViewModel"
         Title="{l:T 'Catálogo de tipos'}"
-        Width="1100" Height="720" MinWidth="860" MinHeight="520"
+        Width="1100" Height="720" MinWidth="700" MinHeight="480"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False">
     <DockPanel>
-        <Border DockPanel.Dock="Top" Classes="toolbar">
-            <DockPanel>
-                <StackPanel Spacing="2">
-                    <TextBlock Classes="h2" Text="{l:T 'Catálogo de tipos'}" />
-                    <TextBlock Classes="label" Text="{Binding Summary}" />
+        <Border DockPanel.Dock="Top" Classes="bar" BorderThickness="0,0,0,1" Padding="16,10">
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                    <Border Classes="brand">
+                        <c:Icon Kind="book" Width="17" Height="17" Foreground="White" />
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="{l:T 'Catálogo de tipos'}" FontWeight="Bold" FontSize="14" />
+                        <TextBlock Classes="label" FontSize="11.5" Text="{Binding Summary}" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
                 </StackPanel>
-                <StackPanel Classes="buttons" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right" VerticalAlignment="Center">
-                    <Button Content="{l:T 'Nuevo tipo…'}" Command="{Binding AddCommand}" />
-                    <Button Content="{l:T 'Eliminar tipo'}" Command="{Binding RemoveCommand}" />
-                    <Button Content="{l:T 'Importar…'}" Command="{Binding ImportCommand}" />
-                    <Button Content="{l:T 'Exportar…'}" Command="{Binding ExportCommand}" />
-                </StackPanel>
-            </DockPanel>
+                <WrapPanel Grid.Column="1" Orientation="Horizontal" ItemSpacing="6" LineSpacing="6" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Button Command="{Binding AddCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <c:Icon Kind="plus" />
+                            <TextBlock Text="{l:T 'Nuevo tipo…'}" />
+                        </StackPanel>
+                    </Button>
+                    <Button Classes="danger" Command="{Binding RemoveCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <c:Icon Kind="trash" />
+                            <TextBlock Text="{l:T 'Eliminar tipo'}" />
+                        </StackPanel>
+                    </Button>
+                    <Button Classes="ghost" Command="{Binding ImportCommand}" ToolTip.Tip="{l:T 'Importar…'}">
+                        <c:Icon Kind="upload" />
+                    </Button>
+                    <Button Classes="ghost" Command="{Binding ExportCommand}" ToolTip.Tip="{l:T 'Exportar…'}">
+                        <c:Icon Kind="download" />
+                    </Button>
+                </WrapPanel>
+            </Grid>
         </Border>
-        <Border DockPanel.Dock="Bottom" BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}" BorderThickness="0,1,0,0" Padding="16,10">
-            <DockPanel>
-                <TextBlock Classes="muted" VerticalAlignment="Center"
+        <Border DockPanel.Dock="Bottom" Classes="bar" BorderThickness="0,1,0,0" Padding="16,10">
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                <TextBlock Classes="muted" FontSize="12" VerticalAlignment="Center"
                            Text="{l:T 'El catálogo es común a todos los proyectos de este equipo y se guarda con el proyecto (Ctrl+S).'}" />
-                <Button HorizontalAlignment="Right" Content="{l:T 'Cerrar'}" Click="OnClose" IsCancel="True" />
-            </DockPanel>
+                <Button Grid.Column="1" Content="{l:T 'Cerrar'}" Click="OnClose" IsCancel="True" />
+            </Grid>
         </Border>
 
-        <Grid ColumnDefinitions="300,*">
-            <Border BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}" BorderThickness="0,0,1,0">
-                <DockPanel Margin="8">
-                    <TextBox DockPanel.Dock="Top" Text="{Binding Filter}" PlaceholderText="{l:T 'Filtrar tipos'}" Margin="0,0,0,6" />
-                    <CheckBox DockPanel.Dock="Top" Content="{l:T 'Solo los que no tienen equivalencia'}" IsChecked="{Binding OnlyPending}" Margin="0,0,0,6" />
-                    <ListBox ItemsSource="{Binding Types}" SelectedItem="{Binding Selected}">
+        <Grid ColumnDefinitions="260,*">
+            <Border Classes="side">
+                <DockPanel Margin="0,12,0,8">
+                    <TextBox DockPanel.Dock="Top" Text="{Binding Filter}" PlaceholderText="{l:T 'Filtrar tipos'}" Margin="12,0,12,8">
+                        <TextBox.InnerLeftContent>
+                            <c:Icon Kind="search" Width="14" Height="14" Margin="10,0,0,0" Foreground="{DynamicResource App.TextMuted}" />
+                        </TextBox.InnerLeftContent>
+                    </TextBox>
+                    <CheckBox DockPanel.Dock="Top" Content="{l:T 'Solo los que no tienen equivalencia'}" IsChecked="{Binding OnlyPending}" Margin="14,0,12,6" />
+                    <ListBox Classes="cards" ItemsSource="{Binding Types}" SelectedItem="{Binding Selected}">
                         <ListBox.ItemTemplate>
                             <DataTemplate x:DataType="vm:AssetTypeViewModel">
-                                <StackPanel Spacing="2" Margin="0,2">
-                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
-                                    <TextBlock Text="{Binding Status}" Classes="label" Classes.badge="{Binding IsPending}" TextTrimming="CharacterEllipsis" />
+                                <StackPanel Spacing="2">
+                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Text="{Binding Status}" Classes="label" FontSize="11.5" Classes.badge="{Binding IsPending}" TextTrimming="CharacterEllipsis" />
                                 </StackPanel>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
@@ -51,48 +76,70 @@
             <ContentControl Grid.Column="1" Content="{Binding Selected}">
                 <ContentControl.ContentTemplate>
                     <DataTemplate x:DataType="vm:AssetTypeViewModel">
-                        <ScrollViewer>
-                            <StackPanel Margin="20" Spacing="14">
-                                <TextBlock Classes="h1" Text="{Binding Name}" />
-                                <TextBlock Classes="h2" Text="{l:T 'Equivalencia en el PLC'}" />
-                                <Grid ColumnDefinitions="200,*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="8" ColumnSpacing="12">
-                                    <TextBlock Classes="label" Text="{l:T 'FB al que se llama'}" />
-                                    <TextBox Grid.Column="1" Text="{Binding Fb, UpdateSourceTrigger=LostFocus}" Classes="mono" />
-                                    <Button Grid.Column="2" Content="{l:T 'Sugerir'}" Command="{Binding SuggestCommand}" ToolTip.Tip="LoS_ + tipo" />
+                        <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+                            <StackPanel Margin="24,20" Spacing="16">
+                                <TextBlock Classes="h1" Text="{Binding Name}" TextWrapping="Wrap" />
 
-                                    <TextBlock Grid.Row="1" Classes="label" Text="{l:T 'UDT de la variable del asset'}" />
-                                    <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Udt, UpdateSourceTrigger=LostFocus}" Classes="mono" />
+                                <Border Classes="card">
+                                    <StackPanel Spacing="12">
+                                        <TextBlock Classes="caption" Text="{l:T 'EQUIVALENCIA EN EL PLC'}" />
+                                        <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="10" ColumnSpacing="12">
+                                            <TextBlock Classes="label" Text="{l:T 'FB al que se llama'}" />
+                                            <TextBox Grid.Column="1" Text="{Binding Fb, UpdateSourceTrigger=LostFocus}" Classes="mono" />
+                                            <Button Grid.Column="2" Command="{Binding SuggestCommand}" ToolTip.Tip="LoS_ + tipo">
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <c:Icon Kind="sparkles" />
+                                                    <TextBlock Text="{l:T 'Sugerir'}" />
+                                                </StackPanel>
+                                            </Button>
 
-                                    <TextBlock Grid.Row="2" Classes="label" Text="{l:T 'Pin del FB para el UDT'}" />
-                                    <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding UdtPin, UpdateSourceTrigger=LostFocus}" Classes="mono" />
+                                            <TextBlock Grid.Row="1" Classes="label" Text="{l:T 'UDT de la variable del asset'}" />
+                                            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Udt, UpdateSourceTrigger=LostFocus}" Classes="mono" />
 
-                                    <TextBlock Grid.Row="3" Classes="label" Text="{l:T 'Sección de ese pin'}" />
-                                    <ComboBox Grid.Row="3" Grid.Column="1" ItemsSource="{x:Static vm:AssetTypeViewModel.Sections}" SelectedItem="{Binding UdtPinSection}" Width="160" />
+                                            <TextBlock Grid.Row="2" Classes="label" Text="{l:T 'Pin del FB para el UDT'}" />
+                                            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding UdtPin, UpdateSourceTrigger=LostFocus}" Classes="mono" />
 
-                                    <TextBlock Grid.Row="4" Classes="label" Text="{l:T 'Pin de la operación'}" />
-                                    <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding OperationPin, UpdateSourceTrigger=LostFocus}" Classes="mono" PlaceholderText="{l:T 'vacío si el FB no recibe operación'}" />
-                                </Grid>
+                                            <TextBlock Grid.Row="3" Classes="label" Text="{l:T 'Sección de ese pin'}" />
+                                            <ComboBox Grid.Row="3" Grid.Column="1" ItemsSource="{x:Static vm:AssetTypeViewModel.Sections}" SelectedItem="{Binding UdtPinSection}" Width="160" />
 
-                                <TextBlock Classes="h2" Text="{l:T 'Interfaz del FB'}" />
-                                <TextBlock Classes="mono" Text="{Binding Parameters}" TextWrapping="Wrap" />
-
-                                <DockPanel>
-                                    <TextBlock Classes="h2" Text="{l:T 'Variables'}" VerticalAlignment="Center" />
-                                    <StackPanel Classes="buttons" Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right">
-                                        <Button Content="{l:T 'Añadir variable'}" Command="{Binding AddVariableCommand}" />
-                                        <Button Content="{l:T 'Eliminar variable'}" Command="{Binding RemoveVariableCommand}" />
+                                            <TextBlock Grid.Row="4" Classes="label" Text="{l:T 'Pin de la operación'}" />
+                                            <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding OperationPin, UpdateSourceTrigger=LostFocus}" Classes="mono" PlaceholderText="{l:T 'vacío si el FB no recibe operación'}" />
+                                        </Grid>
                                     </StackPanel>
-                                </DockPanel>
-                                <ListBox ItemsSource="{Binding Variables}" SelectedItem="{Binding SelectedVariable}" MaxHeight="360">
-                                    <ListBox.ItemTemplate>
-                                        <DataTemplate x:DataType="vm:TypeVariableViewModel">
-                                            <Grid ColumnDefinitions="300,160">
-                                                <TextBox Classes="cell" Text="{Binding Name, UpdateSourceTrigger=LostFocus}" Margin="0,0,10,0" />
-                                                <ComboBox Grid.Column="1" ItemsSource="{Binding DataTypeChoices}" SelectedItem="{Binding DataType}" HorizontalAlignment="Stretch" />
-                                            </Grid>
-                                        </DataTemplate>
-                                    </ListBox.ItemTemplate>
-                                </ListBox>
+                                </Border>
+
+                                <Border Classes="card">
+                                    <StackPanel Spacing="10">
+                                        <TextBlock Classes="caption" Text="{l:T 'INTERFAZ DEL FB'}" />
+                                        <TextBlock Classes="mono" Text="{Binding Parameters}" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Classes="card" Padding="0">
+                                    <StackPanel>
+                                        <Grid ColumnDefinitions="*,Auto" Margin="14,10,8,6">
+                                            <TextBlock Classes="caption" Text="{l:T 'VARIABLES'}" VerticalAlignment="Center" />
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
+                                                <Button Classes="ghost" Command="{Binding AddVariableCommand}" ToolTip.Tip="{l:T 'Añadir variable'}">
+                                                    <c:Icon Kind="plus" />
+                                                </Button>
+                                                <Button Classes="ghost danger" Command="{Binding RemoveVariableCommand}" ToolTip.Tip="{l:T 'Eliminar variable'}">
+                                                    <c:Icon Kind="trash" />
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
+                                        <ListBox Classes="table" ItemsSource="{Binding Variables}" SelectedItem="{Binding SelectedVariable}" MaxHeight="360">
+                                            <ListBox.ItemTemplate>
+                                                <DataTemplate x:DataType="vm:TypeVariableViewModel">
+                                                    <Grid ColumnDefinitions="2*,*" ColumnSpacing="10">
+                                                        <TextBox Classes="cell" Text="{Binding Name, UpdateSourceTrigger=LostFocus}" />
+                                                        <ComboBox Grid.Column="1" ItemsSource="{Binding DataTypeChoices}" SelectedItem="{Binding DataType}" HorizontalAlignment="Stretch" MaxWidth="220" />
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ListBox.ItemTemplate>
+                                        </ListBox>
+                                    </StackPanel>
+                                </Border>
                             </StackPanel>
                         </ScrollViewer>
                     </DataTemplate>

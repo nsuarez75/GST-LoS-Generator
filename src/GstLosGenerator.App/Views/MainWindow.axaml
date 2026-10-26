@@ -1,11 +1,13 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:GstLosGenerator.App.ViewModels"
+        xmlns:c="using:GstLosGenerator.App.Controls"
         xmlns:l="using:GstLosGenerator.App"
         x:Class="GstLosGenerator.App.Views.MainWindow"
+        Icon="/Assets/gst-los-generator.png"
         x:DataType="vm:MainViewModel"
         Title="{Binding Title}"
-        Width="1400" Height="860" MinWidth="1000" MinHeight="600"
+        Width="1400" Height="860" MinWidth="900" MinHeight="600"
         WindowStartupLocation="CenterScreen">
 
     <Window.KeyBindings>
@@ -22,95 +24,175 @@
     </Window.KeyBindings>
 
     <DockPanel>
-        <Menu DockPanel.Dock="Top">
-            <MenuItem Header="{l:T '_Archivo'}">
-                <MenuItem Header="{l:T 'Proyecto nuevo'}" Command="{Binding NewCommand}" InputGesture="Ctrl+N" />
-                <MenuItem Header="{l:T 'Abrir…'}" Command="{Binding OpenCommand}" InputGesture="Ctrl+O" />
-                <MenuItem Header="{l:T 'Guardar'}" Command="{Binding SaveCommand}" InputGesture="Ctrl+S" />
-                <MenuItem Header="{l:T 'Guardar como…'}" Command="{Binding SaveAsCommand}" InputGesture="Ctrl+Shift+S" />
-                <Separator />
-                <MenuItem Header="{l:T 'Importar LoS…'}" Command="{Binding ImportLosCommand}" InputGesture="Ctrl+I" />
-                <Separator />
-                <MenuItem x:Name="ExitItem" Header="{l:T 'Salir'}" />
-            </MenuItem>
-            <MenuItem Header="{l:T '_Editar'}">
-                <MenuItem Header="{l:T 'Deshacer'}" Command="{Binding UndoCommand}" InputGesture="Ctrl+Z" />
-                <MenuItem Header="{l:T 'Rehacer'}" Command="{Binding RedoCommand}" InputGesture="Ctrl+Y" />
-            </MenuItem>
-            <MenuItem Header="{l:T '_Proyecto'}">
-                <MenuItem Header="{l:T 'Añadir PLC…'}" Command="{Binding AddPlcCommand}" />
-                <MenuItem Header="{l:T 'Catálogo de tipos…'}" Command="{Binding OpenCatalogCommand}" InputGesture="Ctrl+T" />
-                <Separator />
-                <MenuItem Header="{l:T 'Leer FB…'}" Command="{Binding ReadFbCommand}" InputGesture="Ctrl+R" />
-            </MenuItem>
-            <MenuItem Header="{l:T '_Generar'}">
-                <MenuItem Header="{l:T 'Generar FB y UDT…'}" Command="{Binding GenerateCommand}" InputGesture="F5" />
-            </MenuItem>
-            <MenuItem Header="{l:T '_Ver'}">
-                <MenuItem Header="{l:T 'Tema'}">
-                    <MenuItem Header="{l:T 'Sistema'}" ToggleType="Radio" GroupName="theme" IsChecked="{Binding IsThemeSystem, Mode=OneWay}"
-                              Command="{Binding SetThemeCommand}" CommandParameter="system" />
-                    <MenuItem Header="{l:T 'Claro'}" ToggleType="Radio" GroupName="theme" IsChecked="{Binding IsThemeLight, Mode=OneWay}"
-                              Command="{Binding SetThemeCommand}" CommandParameter="light" />
-                    <MenuItem Header="{l:T 'Oscuro'}" ToggleType="Radio" GroupName="theme" IsChecked="{Binding IsThemeDark, Mode=OneWay}"
-                              Command="{Binding SetThemeCommand}" CommandParameter="dark" />
-                </MenuItem>
-                <MenuItem Header="{l:T 'Idioma'}">
-                    <MenuItem Header="Castellano" ToggleType="Radio" GroupName="language" IsChecked="{Binding IsSpanish, Mode=OneWay}"
-                              Command="{Binding SetLanguageCommand}" CommandParameter="es" />
-                    <MenuItem Header="English" ToggleType="Radio" GroupName="language" IsChecked="{Binding IsEnglish, Mode=OneWay}"
-                              Command="{Binding SetLanguageCommand}" CommandParameter="en" />
-                </MenuItem>
-            </MenuItem>
-            <MenuItem Header="{l:T 'Acerca de'}" Command="{Binding AboutCommand}" />
-        </Menu>
+        <!-- ░░ Barra superior: marca y proyecto, archivo, acciones del proyecto y apariencia ░░ -->
+        <Border DockPanel.Dock="Top" Classes="bar" BorderThickness="0,0,0,1" Padding="16,9">
+            <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto" ColumnSpacing="12">
+                <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                    <Image Source="/Assets/gst-los-generator.png" Width="32" Height="32" />
+                    <StackPanel VerticalAlignment="Center" MaxWidth="220">
+                        <TextBlock Text="GST LoS Generator" FontWeight="Bold" FontSize="14" />
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <TextBlock Text="{Binding ProjectName}" Classes="label" FontSize="11.5" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="•" Classes="label" FontSize="11.5" IsVisible="{Binding IsDirty}"
+                                       Foreground="{DynamicResource App.Warn}" ToolTip.Tip="{l:T 'Cambios sin guardar'}" />
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
 
-        <!-- Aviso de versión nueva -->
-        <Border DockPanel.Dock="Top" IsVisible="{Binding HasUpdate}" Padding="16,6"
-                Background="{DynamicResource SystemControlBackgroundBaseLowBrush}">
+                <!-- Archivo y edición -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center" Margin="12,0,0,0">
+                    <Button Classes="ghost" Command="{Binding NewCommand}" ToolTip.Tip="{l:T 'Proyecto nuevo (Ctrl+N)'}">
+                        <c:Icon Kind="file-plus" Width="17" Height="17" />
+                    </Button>
+                    <Button Classes="ghost" Command="{Binding OpenCommand}" ToolTip.Tip="{l:T 'Abrir… (Ctrl+O)'}">
+                        <c:Icon Kind="folder" Width="17" Height="17" />
+                    </Button>
+                    <Button Classes="ghost" Command="{Binding SaveCommand}" ToolTip.Tip="{l:T 'Guardar (Ctrl+S)'}">
+                        <c:Icon Kind="save" Width="17" Height="17" />
+                    </Button>
+                    <Button Classes="ghost" ToolTip.Tip="{l:T 'Más'}">
+                        <c:Icon Kind="more" Width="17" Height="17" StrokeWidth="3" />
+                        <Button.Flyout>
+                            <MenuFlyout Placement="BottomEdgeAlignedLeft">
+                                <MenuItem Header="{l:T 'Guardar como…'}" Command="{Binding SaveAsCommand}" InputGesture="Ctrl+Shift+S" />
+                                <MenuItem Header="{l:T 'Añadir PLC…'}" Command="{Binding AddPlcCommand}" />
+                                <Separator />
+                                <MenuItem Header="{l:T 'Acerca de'}" Command="{Binding AboutCommand}" />
+                                <MenuItem x:Name="ExitItem" Header="{l:T 'Salir'}" />
+                            </MenuFlyout>
+                        </Button.Flyout>
+                    </Button>
+                    <Border Classes="vdivider" />
+                    <Button Classes="ghost" Command="{Binding UndoCommand}" ToolTip.Tip="{l:T 'Deshacer (Ctrl+Z)'}">
+                        <c:Icon Kind="undo" Width="17" Height="17" />
+                    </Button>
+                    <Button Classes="ghost" Command="{Binding RedoCommand}" ToolTip.Tip="{l:T 'Rehacer (Ctrl+Y)'}">
+                        <c:Icon Kind="redo" Width="17" Height="17" />
+                    </Button>
+                </StackPanel>
+
+                <!-- Acciones del proyecto: lo que se hace de principio a fin, en orden -->
+                <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                    <Button Command="{Binding ImportLosCommand}" ToolTip.Tip="{l:T 'Importar LoS… (Ctrl+I)'}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <c:Icon Kind="file-sheet" />
+                            <TextBlock Text="{l:T 'Importar LoS'}" Classes="barlabel" />
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding OpenCatalogCommand}" ToolTip.Tip="{l:T 'Catálogo de tipos… (Ctrl+T)'}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <c:Icon Kind="book" />
+                            <TextBlock Text="{l:T 'Catálogo'}" Classes="barlabel" />
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding ReadFbCommand}" ToolTip.Tip="{l:T 'Leer FB… (Ctrl+R)'}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <c:Icon Kind="file-code" />
+                            <TextBlock Text="{l:T 'Leer FB'}" Classes="barlabel" />
+                        </StackPanel>
+                    </Button>
+                    <Button Classes="accent" Command="{Binding GenerateCommand}" ToolTip.Tip="{l:T 'Generar FB y UDT… (F5)'}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <c:Icon Kind="zap" />
+                            <TextBlock Text="{l:T 'Generar'}" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+
+                <!-- Apariencia -->
+                <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+                    <Border Classes="vdivider" />
+                    <Button Classes="ghost" ToolTip.Tip="{l:T 'Idioma'}">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <c:Icon Kind="globe" Width="17" Height="17" />
+                            <TextBlock Text="{Binding LanguageText}" FontSize="11.5" FontWeight="SemiBold" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <Button.Flyout>
+                            <MenuFlyout Placement="BottomEdgeAlignedRight">
+                                <MenuItem Header="Castellano" ToggleType="Radio" GroupName="language" IsChecked="{Binding IsSpanish, Mode=OneWay}"
+                                          Command="{Binding SetLanguageCommand}" CommandParameter="es" />
+                                <MenuItem Header="English" ToggleType="Radio" GroupName="language" IsChecked="{Binding IsEnglish, Mode=OneWay}"
+                                          Command="{Binding SetLanguageCommand}" CommandParameter="en" />
+                            </MenuFlyout>
+                        </Button.Flyout>
+                    </Button>
+                    <Button Classes="ghost" ToolTip.Tip="{l:T 'Tema'}">
+                        <c:Icon Kind="{Binding ThemeIcon}" Width="17" Height="17" />
+                        <Button.Flyout>
+                            <MenuFlyout Placement="BottomEdgeAlignedRight">
+                                <MenuItem Header="{l:T 'Sistema'}" ToggleType="Radio" GroupName="theme" IsChecked="{Binding IsThemeSystem, Mode=OneWay}"
+                                          Command="{Binding SetThemeCommand}" CommandParameter="system" />
+                                <MenuItem Header="{l:T 'Claro'}" ToggleType="Radio" GroupName="theme" IsChecked="{Binding IsThemeLight, Mode=OneWay}"
+                                          Command="{Binding SetThemeCommand}" CommandParameter="light" />
+                                <MenuItem Header="{l:T 'Oscuro'}" ToggleType="Radio" GroupName="theme" IsChecked="{Binding IsThemeDark, Mode=OneWay}"
+                                          Command="{Binding SetThemeCommand}" CommandParameter="dark" />
+                            </MenuFlyout>
+                        </Button.Flyout>
+                    </Button>
+                    <Button Classes="ghost" Command="{Binding AboutCommand}" ToolTip.Tip="{l:T 'Acerca de'}">
+                        <c:Icon Kind="info" Width="17" Height="17" />
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ░░ Aviso de versión nueva ░░ -->
+        <Border DockPanel.Dock="Top" Classes="notice" IsVisible="{Binding HasUpdate}" Padding="16,7">
             <DockPanel>
-                <Button DockPanel.Dock="Right" Content="✕" Command="{Binding DismissUpdateCommand}" Padding="8,2" ToolTip.Tip="{l:T 'Cerrar'}" />
-                <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding UpdateNotice}" VerticalAlignment="Center" />
-                    <HyperlinkButton Content="{l:T 'Descargar'}" NavigateUri="{Binding UpdateUrl}" Padding="0" />
+                <Button DockPanel.Dock="Right" Classes="ghost" Command="{Binding DismissUpdateCommand}" Padding="5" ToolTip.Tip="{l:T 'Cerrar'}">
+                    <c:Icon Kind="x" Width="14" Height="14" />
+                </Button>
+                <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                    <c:Icon Kind="download" Width="15" Height="15" Foreground="{DynamicResource App.AccentText}" />
+                    <TextBlock Text="{Binding UpdateNotice}" VerticalAlignment="Center" Foreground="{DynamicResource App.AccentText}" FontWeight="Medium" />
+                    <HyperlinkButton Content="{l:T 'Descargar'}" NavigateUri="{Binding UpdateUrl}" Padding="0" VerticalAlignment="Center" />
                 </StackPanel>
             </DockPanel>
         </Border>
 
-        <!-- Barra de avisos -->
-        <Border DockPanel.Dock="Bottom" BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}" BorderThickness="0,1,0,0">
-            <Expander x:Name="IssuesExpander" HorizontalAlignment="Stretch" Padding="0" CornerRadius="0">
+        <!-- ░░ Barra de avisos ░░ -->
+        <Border DockPanel.Dock="Bottom" Classes="bar" BorderThickness="0,1,0,0">
+            <Expander x:Name="IssuesExpander" HorizontalAlignment="Stretch" Padding="0" CornerRadius="0"
+                      Background="Transparent" BorderThickness="0">
                 <Expander.Header>
-                    <TextBlock Text="{Binding IssuesSummary}" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <c:Icon Kind="alert" Width="14" Height="14" Foreground="{DynamicResource App.Warn}" IsVisible="{Binding HasIssues}" />
+                        <c:Icon Kind="check" Width="14" Height="14" Foreground="{DynamicResource App.Good}" IsVisible="{Binding HasNoIssues}" />
+                        <TextBlock Text="{Binding IssuesSummary}" FontSize="12" VerticalAlignment="Center" />
+                    </StackPanel>
                 </Expander.Header>
-                <ListBox ItemsSource="{Binding Issues}" SelectedItem="{Binding SelectedIssue}" MaxHeight="180">
+                <ListBox Classes="table" ItemsSource="{Binding Issues}" SelectedItem="{Binding SelectedIssue}" MaxHeight="180">
                     <ListBox.ItemTemplate>
                         <DataTemplate x:DataType="vm:IssueViewModel">
-                            <TextBlock Text="{Binding Text}" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="{Binding Text}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
             </Expander>
         </Border>
 
-        <Grid ColumnDefinitions="280,Auto,*">
-            <Border Grid.Column="0" BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}" BorderThickness="0,0,1,0">
-                <TreeView x:Name="NavTree" ItemsSource="{Binding Tree}" SelectedItem="{Binding SelectedNode}" Margin="4">
-                    <TreeView.ItemTemplate>
-                        <TreeDataTemplate DataType="vm:NavNode" ItemsSource="{Binding Children}">
-                            <Grid ColumnDefinitions="22,*,Auto">
-                                <TextBlock Grid.Column="0" Text="{Binding Glyph}" Classes="label" />
-                                <TextBlock Grid.Column="1" Text="{Binding Title}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-                                <TextBlock Grid.Column="2" Text="{Binding Detail}" Classes="label" Margin="8,0,0,0" />
-                            </Grid>
-                        </TreeDataTemplate>
-                    </TreeView.ItemTemplate>
-                    <TreeView.Styles>
-                        <Style Selector="TreeViewItem" x:DataType="vm:NavNode">
-                            <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
-                        </Style>
-                    </TreeView.Styles>
-                </TreeView>
+        <Grid x:Name="Body" ColumnDefinitions="260,Auto,*">
+            <!-- ░░ Lateral: el proyecto y sus PLC ░░ -->
+            <Border Classes="side">
+                <DockPanel Margin="8,14,8,8">
+                    <TextBlock DockPanel.Dock="Top" Text="{l:T 'PROYECTO'}" Classes="caption" Margin="10,0,0,8" />
+                    <TreeView x:Name="NavTree" ItemsSource="{Binding Tree}" SelectedItem="{Binding SelectedNode}" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <TreeView.ItemTemplate>
+                            <TreeDataTemplate DataType="vm:NavNode" ItemsSource="{Binding Children}">
+                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                                    <c:Icon Kind="{Binding Icon}" Width="15" Height="15" VerticalAlignment="Center" Foreground="{DynamicResource App.TextMuted}" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Title}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="2" Text="{Binding Detail}" Classes="label" FontSize="11.5" Margin="4,0,6,0" MaxWidth="110" TextTrimming="CharacterEllipsis" />
+                                </Grid>
+                            </TreeDataTemplate>
+                        </TreeView.ItemTemplate>
+                        <TreeView.Styles>
+                            <Style Selector="TreeViewItem" x:DataType="vm:NavNode">
+                                <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                            </Style>
+                        </TreeView.Styles>
+                    </TreeView>
+                </DockPanel>
             </Border>
             <GridSplitter Grid.Column="1" Width="4" ResizeDirection="Columns" Background="Transparent" />
             <ContentControl Grid.Column="2" Content="{Binding Editor}" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />

@@ -11,7 +11,7 @@ public sealed record IssueViewModel(Issue Issue)
     public string Text => Issue.Plc.Length > 0 ? $"{Issue.Plc} · {Issue.Text}" : Issue.Text;
 }
 
-// Ventana principal: menú, árbol del proyecto, editor central y barra de avisos.
+// Ventana principal: barra superior, árbol del proyecto, editor central y barra de avisos.
 public sealed partial class MainViewModel : ObservableObject
 {
     public static readonly FileFilter ProjectFilter = new("GST LoS Generator", Storage.ProjectExtension);
@@ -40,8 +40,21 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     public partial string Title { get; set; } = "";
 
+    // Nombre del proyecto y si tiene cambios sin guardar, para la barra superior.
+    [ObservableProperty]
+    public partial string ProjectName { get; set; } = "";
+
+    [ObservableProperty]
+    public partial bool IsDirty { get; set; }
+
     [ObservableProperty]
     public partial string IssuesSummary { get; set; } = "";
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasNoIssues))]
+    public partial bool HasIssues { get; set; }
+
+    public bool HasNoIssues => !HasIssues;
 
     [ObservableProperty]
     public partial IssueViewModel? SelectedIssue { get; set; }
@@ -62,6 +75,8 @@ public sealed partial class MainViewModel : ObservableObject
     public bool IsThemeDark => Settings.Theme == AppSettings.ThemeDark;
     public bool IsSpanish => L.Language == L.Spanish;
     public bool IsEnglish => L.Language == L.English;
+    public string ThemeIcon => IsThemeDark ? "moon" : IsThemeLight ? "sun" : "monitor";
+    public string LanguageText => IsEnglish ? "EN" : "ES";
 
     // ---------------------------------------------------------------- árbol y editor
 
@@ -153,6 +168,8 @@ public sealed partial class MainViewModel : ObservableObject
     {
         var name = Session.Project.Name.Length > 0 ? Session.Project.Name : L.T("Proyecto");
         Title = $"GST LoS Generator — {name}{(Session.Dirty ? " *" : "")}";
+        ProjectName = name;
+        IsDirty = Session.Dirty;
         RefreshTitles();
         Issues.Clear();
         foreach (var issue in Validation.Check(Session.Project, Session.Catalog))
@@ -165,6 +182,7 @@ public sealed partial class MainViewModel : ObservableObject
             1 => L.T("1 aviso"),
             _ => L.T("{0} avisos", Issues.Count),
         };
+        HasIssues = Issues.Count > 0;
         UndoCommand.NotifyCanExecuteChanged();
         RedoCommand.NotifyCanExecuteChanged();
     }
@@ -452,6 +470,10 @@ public sealed partial class MainViewModel : ObservableObject
     {
         Settings.Theme = theme;
         _saveSettings(Settings);
+        OnPropertyChanged(nameof(IsThemeSystem));
+        OnPropertyChanged(nameof(IsThemeLight));
+        OnPropertyChanged(nameof(IsThemeDark));
+        OnPropertyChanged(nameof(ThemeIcon));
         AppearanceChanged?.Invoke();
     }
 
