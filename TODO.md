@@ -11,3 +11,4 @@
 - Seguir el tema de Windows por defecto, con selector «Claro / Oscuro / Sistema» que se recuerda.
 - Assets en árbol PLC → celda → asset de operación → sub-assets, con buscador. Cada asset se despliega y muestra sus variables con tipo de dato y dirección.
 - Reimportar el FB: cada segmento se reconoce por su título. Los existentes no se tocan salvo que se marquen para regenerar, los nuevos se insertan en su sitio, los manuales se conservan y los de assets que ya no existen se avisan, no se borran.
+- Selector de idioma castellano / inglés en la app.
