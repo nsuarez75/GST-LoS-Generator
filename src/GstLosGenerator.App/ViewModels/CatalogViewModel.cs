@@ -174,7 +174,21 @@ public sealed partial class AssetTypeViewModel : EditableViewModel
 
     public string Name => Type.Name;
     public bool IsPending => !Type.HasEquivalence;
-    public string Status => Type.HasEquivalence ? $"{Type.Fb} · {Type.Udt}" : L.T("Sin equivalencia");
+    public string Status => Type.NoFb ? L.T("Sin FB") : Type.HasEquivalence ? $"{Type.Fb} · {Type.Udt}" : L.T("Sin equivalencia");
+
+    public bool NoFb
+    {
+        get => Type.NoFb;
+        set
+        {
+            if (Edit(Type.NoFb, value, v => Type.NoFb = v))
+            {
+                OnPropertyChanged(nameof(IsPending));
+                OnPropertyChanged(nameof(Status));
+                _owner.Refresh();
+            }
+        }
+    }
     public string Parameters => Type.Parameters.Count == 0
         ? L.T("Se aprende al leer un FB que use este tipo.")
         : string.Join("\n", Type.Parameters.Select(p => $"{p.Name}  ({p.Section})  {p.Type}"));
@@ -279,5 +293,11 @@ public sealed partial class TypeVariableViewModel(Session session, TypeVariable 
                 Edit(Variable.DataType, value, v => Variable.DataType = v);
             }
         }
+    }
+
+    public string Source
+    {
+        get => Variable.Source;
+        set => Edit(Variable.Source, value.Trim(), v => Variable.Source = v);
     }
 }

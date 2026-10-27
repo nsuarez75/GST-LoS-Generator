@@ -50,8 +50,14 @@ public sealed class FbPlan
         var assets = Plc.Assets.Where(a => !a.Missing).ToList();
         var tree = new AssetTree(assets);
         var included = new HashSet<string>();
+        var direct = new Dictionary<string, AssetType>();
         foreach (var asset in tree.InOrder())
         {
+            if (catalog.Find(asset.Type) is { NoFb: true } noFb)
+            {
+                direct[asset.Element] = noFb;
+                continue;
+            }
             var call = ResolveCall(Plc, asset, catalog);
             if (call is null)
             {
@@ -84,7 +90,7 @@ public sealed class FbPlan
             Static.Add(new(operation.VariableName, $"\"{Naming.OperationUdt}\"", true, null));
         }
 
-        BuildRegions(tree, included);
+        BuildRegions(tree, included, direct);
 
         foreach (var device in Plc.Devices)
         {
@@ -103,7 +109,8 @@ public sealed class FbPlan
         }
     }
 
-    private void BuildRegions(AssetTree tree, HashSet<string> included)
+    // Los assets de tipos sin FB van todos a General, estén donde estén en el árbol.
+    private void BuildRegions(AssetTree tree, HashSet<string> included, Dictionary<string, AssetType> direct)
     {
         var general = new List<DeviceAssignment>();
         var generalAssets = new HashSet<string>();
@@ -132,26 +139,51 @@ public sealed class FbPlan
             Regions.Add(new SclRegion(root.Element, [], children));
             RegionAssets[root.Element] = [];
         }
+        foreach (var asset in tree.InOrder().Where(a => direct.ContainsKey(a.Element)))
+        {
+            general.AddRange(DirectAssignments(asset, direct[asset.Element]));
+            generalAssets.Add(asset.Element);
+        }
         Regions.Insert(0, new SclRegion("General", general, []));
         RegionAssets["General"] = generalAssets;
     }
 
-    private List<DeviceAssignment> Assignments(Asset asset, HashSet<string> included)
+    private List<DeviceAssignment> Assignments(Asset asset, HashSet<string> included) =>
+        included.Contains(asset.Element) ? Assignments(asset, v => SclPath.Local(asset.Element, v.Name)) : [];
+
+    // Tipo sin FB: cada variable sale de su origen en el catálogo; sin origen no se escribe.
+    private List<DeviceAssignment> DirectAssignments(Asset asset, AssetType type) =>
+        Assignments(asset, v =>
+        {
+            var source = type.Variables.FirstOrDefault(t => t.Name == v.Name)?.Source ?? "";
+            if (source.Trim().Length == 0)
+            {
+                return null;
+            }
+            var path = SclPath.Parse(source);
+            if (path is null)
+            {
+                Warnings.Add(L.T("{0}.{1}: el origen «{2}» no es una variable válida; no se escribe en Struct TO DEVICE.", asset.Element, v.Name, source));
+            }
+            return path;
+        });
+
+    private List<DeviceAssignment> Assignments(Asset asset, Func<AssetVariable, SclPath?> source)
     {
         var list = new List<DeviceAssignment>();
-        if (!included.Contains(asset.Element))
-        {
-            return list;
-        }
         foreach (var variable in asset.Variables.Where(v => v.IsOutput))
         {
+            if (source(variable) is not { } path)
+            {
+                continue;
+            }
             if (!Naming.TryParseAddress(variable.Address, out var parts) || Plc.FindDevice(parts.Device) is not { } device)
             {
                 Warnings.Add(L.T("{0}.{1}: la dirección {2} no está en ningún device; no se escribe en Struct TO DEVICE.", asset.Element, variable.Name, variable.Address));
                 continue;
             }
             var member = device.Addresses.FirstOrDefault(a => a.SheetName == variable.Address || a.Name == variable.Address)?.Name ?? variable.Address;
-            list.Add(new DeviceAssignment(Plc.DeviceName(device.Number), member, asset.Element, variable.Name));
+            list.Add(new DeviceAssignment(Plc.DeviceName(device.Number), member, path));
         }
         return list;
     }

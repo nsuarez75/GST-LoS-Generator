@@ -156,18 +156,22 @@ public sealed class AssetType
     public string UdtPinSection { get; set; } = "Output";
     // Pin de la operación; vacío si el FB no la recibe.
     public string OperationPin { get; set; } = "Operation";
+    // Sin FB ni UDT (CE_PLC): no hay llamada ni variable del asset; cada variable se escribe desde su origen.
+    public bool NoFb { get; set; }
     public List<TypeVariable> Variables { get; set; } = [];
     // Interfaz completa del FB, aprendida al leer un FB. Vacía si no se conoce.
     public List<FbParameter> Parameters { get; set; } = [];
 
     [JsonIgnore]
-    public bool HasEquivalence => Fb.Length > 0 && Udt.Length > 0 && UdtPin.Length > 0;
+    public bool HasEquivalence => NoFb || (Fb.Length > 0 && Udt.Length > 0 && UdtPin.Length > 0);
 }
 
 public sealed class TypeVariable
 {
     public string Name { get; set; } = "";
     public string DataType { get; set; } = "";
+    // Solo en tipos sin FB: lo que se escribe en el device (#LifeBit, "DB".a.b). Vacío: no se escribe.
+    public string Source { get; set; } = "";
 }
 
 public sealed record FbParameter(string Name, string Section, string Type);

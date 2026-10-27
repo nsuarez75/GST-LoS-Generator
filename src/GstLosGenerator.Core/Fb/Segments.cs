@@ -19,7 +19,60 @@ public sealed record CallInfo(
 }
 
 // Asignación de Struct TO DEVICE: #Device_61."Bool_061_o(000)_00" := #LX9_01_CELL01.ProductionStatus;
-public sealed record DeviceAssignment(string Device, string Member, string Element, string Variable);
+public sealed record DeviceAssignment(string Device, string Member, SclPath Source);
+
+// Variable de SCL: #a.b es local; "DB".a.b o Tag, global. Las comillas no forman parte del nombre.
+public sealed record SclPath(bool Global, IReadOnlyList<string> Components)
+{
+    public static SclPath Local(params string[] components) => new(false, components);
+
+    // Solo rutas con punto: sin índices de array ni expresiones.
+    public static SclPath? Parse(string text)
+    {
+        text = text.Trim();
+        var global = !text.StartsWith('#');
+        var rest = global ? text : text[1..];
+        var components = new List<string>();
+        var i = 0;
+        while (true)
+        {
+            string name;
+            if (i < rest.Length && rest[i] == '"')
+            {
+                var end = rest.IndexOf('"', i + 1);
+                if (end < 0)
+                {
+                    return null;
+                }
+                name = rest[(i + 1)..end];
+                i = end + 1;
+            }
+            else
+            {
+                var start = i;
+                while (i < rest.Length && (char.IsLetterOrDigit(rest[i]) || rest[i] == '_'))
+                {
+                    i++;
+                }
+                name = rest[start..i];
+            }
+            if (name.Length == 0)
+            {
+                return null;
+            }
+            components.Add(name);
+            if (i == rest.Length)
+            {
+                return new SclPath(global, components);
+            }
+            if (rest[i] != '.')
+            {
+                return null;
+            }
+            i++;
+        }
+    }
+}
 
 // Región de Struct TO DEVICE; las de celda llevan sub-regiones.
 public sealed record SclRegion(string Name, IReadOnlyList<DeviceAssignment> Assignments, IReadOnlyList<SclRegion> Children);
@@ -357,18 +410,20 @@ public sealed class SclWriter
     private XAttribute Id() => new("UId", _ids.Next());
 
     // #a.b con los componentes separados por el token «.».
-    public XElement Local(params string[] components)
+    public XElement Local(params string[] components) => Access(SclPath.Local(components));
+
+    public XElement Access(SclPath path)
     {
         var symbol = new XElement(Ns + "Symbol", Id());
-        for (var i = 0; i < components.Length; i++)
+        for (var i = 0; i < path.Components.Count; i++)
         {
             if (i > 0)
             {
                 symbol.Add(new XElement(Ns + "Token", new XAttribute("Text", "."), Id()));
             }
-            symbol.Add(new XElement(Ns + "Component", new XAttribute("Name", components[i]), Id()));
+            symbol.Add(new XElement(Ns + "Component", new XAttribute("Name", path.Components[i]), Id()));
         }
-        return new XElement(Ns + "Access", new XAttribute("Scope", "LocalVariable"), Id(), symbol);
+        return new XElement(Ns + "Access", new XAttribute("Scope", path.Global ? "GlobalVariable" : "LocalVariable"), Id(), symbol);
     }
 
     public void Region(SclRegion region, int depth)
@@ -378,7 +433,7 @@ public sealed class SclWriter
         foreach (var a in region.Assignments)
         {
             Indent(depth + 1);
-            Add(Local(a.Device, a.Member)).Blank().Token(":=").Blank().Add(Local(a.Element, a.Variable)).Token(";").NewLine();
+            Add(Local(a.Device, a.Member)).Blank().Token(":=").Blank().Add(Access(a.Source)).Token(";").NewLine();
         }
         for (var i = 0; i < region.Children.Count; i++)
         {
