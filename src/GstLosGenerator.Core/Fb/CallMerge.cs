@@ -35,6 +35,7 @@ public static class CallMerge
         {
             var available = newParameters.Select(p => p.Name).ToHashSet();
             var lost = wires.Elements(Ns + "Wire")
+                .Where(w => !Segments.IsOpen(w))
                 .SelectMany(w => w.Elements(Ns + "NameCon"))
                 .Where(n => (string?)n.Attribute("UId") == callId)
                 .Select(n => (string)n.Attribute("Name")!)
@@ -57,6 +58,9 @@ public static class CallMerge
         info.Elements(Ns + "Parameter").Remove();
         info.Add(newParameters.Select(p => new XElement(Ns + "Parameter",
             new XAttribute("Name", p.Name), new XAttribute("Section", p.Section), new XAttribute("Type", p.Type))));
+
+        // Los pines sin cablear se vuelven a abrir al final, ya con la interfaz nueva.
+        wires.Elements(Ns + "Wire").Where(w => Segments.IsOpen(w) && PinCon(w, callId) is not null).Remove();
 
         var ids = new FreeIds(net);
         // Pin del UDT: se reaprovecha el acceso a la variable del asset si ya estaba.
@@ -89,6 +93,7 @@ public static class CallMerge
             wires.Add(new XElement(Ns + "Wire", new XAttribute("UId", ids.Next()),
                 Segments.IdentCon((string)access.Attribute("UId")!), Segments.NameCon(callId, call.OperationPin)));
         }
+        Segments.OpenUnwired(wires, callId, newParameters, ids.Next);
         return null;
     }
 
