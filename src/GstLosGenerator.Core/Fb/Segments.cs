@@ -195,6 +195,7 @@ public static class Segments
         wires.Add(call.UdtPinSection == "Input"
             ? Wire(ids, IdentCon(assetAccess), NameCon(callId, call.UdtPin))
             : Wire(ids, NameCon(callId, call.UdtPin), IdentCon(assetAccess)));
+        OpenUnwired(wires, callId, CallParameters(call), ids.Next);
         return FbXml.CompileUnit(FbXml.Lad, new XElement(FbXml.FlgNet + "FlgNet", parts, wires), call.Title, cultures);
     }
 
@@ -222,7 +223,25 @@ public static class Segments
         return list;
     }
 
-    public static XElement LadAccess(string id, string scope, IEnumerable<string> components) =>
+    // TIA no importa una llamada con pines declarados sin conexión: los que no se cablean van a un OpenCon.
+    public static void OpenUnwired(XElement wires, string callId, IEnumerable<FbParameter> parameters, Func<string> nextId)
+    {
+        var wired = wires.Elements(FbXml.FlgNet + "Wire")
+            .SelectMany(w => w.Elements(FbXml.FlgNet + "NameCon"))
+            .Where(n => (string?)n.Attribute("UId") == callId)
+            .Select(n => (string)n.Attribute("Name")!)
+            .ToHashSet();
+        foreach (var parameter in parameters.Where(p => !wired.Contains(p.Name)))
+        {
+            wires.Add(new XElement(FbXml.FlgNet + "Wire", new XAttribute("UId", nextId()),
+                new XElement(FbXml.FlgNet + "OpenCon", new XAttribute("UId", nextId())),
+                NameCon(callId, parameter.Name)));
+        }
+    }
+
+    public static bool IsOpen(XElement wire) => wire.Element(FbXml.FlgNet + "OpenCon") is not null;
+
+    public static XElement LadAccess(string id,string scope, IEnumerable<string> components) =>
         new(FbXml.FlgNet + "Access", new XAttribute("Scope", scope), new XAttribute("UId", id),
             new XElement(FbXml.FlgNet + "Symbol", components.Select(c => new XElement(FbXml.FlgNet + "Component", new XAttribute("Name", c)))));
 

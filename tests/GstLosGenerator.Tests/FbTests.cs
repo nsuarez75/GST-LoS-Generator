@@ -226,6 +226,36 @@ public class FbTests
     }
 
     [Fact]
+    public void Cada_pin_declarado_en_una_llamada_tiene_una_conexion()
+    {
+        var (_, catalog, plc) = Prepared();
+        var robot = catalog.Find("AS_ROBOT")!;
+        robot.Parameters = [new("NumberRobot", "Input", "Int"), new("Operation", "Input", "\"I40_FixtureCfg_UDT\""),
+            new("Busy", "Output", "Bool"), new("AS_ROBOT", "Output", "\"LoS_AS_ROBOT_UDT\"")];
+        var fresh = Fresh(plc, catalog);
+        var current = WireConstant(fresh, "LX9_01_1000FIX01_01_MOVEHR_01_R", "NumberRobot", "7");
+        plc.FindAsset("LX9_01_1000FIX01_01_MOVEHR_01_R")!.Operation = "110";
+        var regenerated = FbGenerator.Generate(plc, catalog, current, new GenerateOptions
+        {
+            Parts = FbParts.Calls,
+            Assets = ["LX9_01_1000FIX01_01_MOVEHR_01_R"],
+        }).Xml;
+
+        foreach (var xml in new[] { fresh, regenerated })
+        {
+            var net = FbXml.Source(FbDocument.Parse(xml).Find(SegmentKeys.Call("LX9_01_1000FIX01_01_MOVEHR_01_R"))!.Unit)!;
+            var ns = FbXml.FlgNet;
+            var callId = (string)net.Descendants(ns + "Call").First().Attribute("UId")!;
+            var connections = net.Descendants(ns + "NameCon").Where(n => (string?)n.Attribute("UId") == callId)
+                .Select(n => (string)n.Attribute("Name")!).ToList();
+            var declared = net.Descendants(ns + "Parameter").Select(p => (string)p.Attribute("Name")!).ToList();
+            Assert.Equal(4, declared.Count);
+            Assert.Single(connections, "en");
+            Assert.Equal(declared.Order(), connections.Where(c => c != "en").Order());
+        }
+    }
+
+    [Fact]
     public void Si_el_FB_nuevo_pierde_un_pin_cableado_no_se_regenera_sin_confirmar()
     {
         var (_, catalog, plc) = Prepared();
@@ -394,6 +424,11 @@ public class FbTests
         var net = FbXml.Source(unit)!;
         var ns = FbXml.FlgNet;
         var callId = (string)net.Descendants(ns + "Call").First().Attribute("UId")!;
+        // Como en TIA: el cable sustituye al OpenCon del pin.
+        net.Element(ns + "Wires")!.Elements(ns + "Wire")
+            .Where(w => w.Element(ns + "OpenCon") is not null
+                && w.Elements(ns + "NameCon").Any(n => (string?)n.Attribute("UId") == callId && (string?)n.Attribute("Name") == pin))
+            .Remove();
         net.Element(ns + "Parts")!.AddFirst(new XElement(ns + "Access", new XAttribute("Scope", "LiteralConstant"), new XAttribute("UId", "90"),
             new XElement(ns + "Constant", new XElement(ns + "ConstantType", "Int"), new XElement(ns + "ConstantValue", value))));
         net.Element(ns + "Wires")!.Add(new XElement(ns + "Wire", new XAttribute("UId", "91"),
