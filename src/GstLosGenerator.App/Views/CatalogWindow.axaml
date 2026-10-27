@@ -83,7 +83,8 @@
                                 <Border Classes="card">
                                     <StackPanel Spacing="12">
                                         <TextBlock Classes="caption" Text="{l:T 'EQUIVALENCIA EN EL PLC'}" />
-                                        <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="10" ColumnSpacing="12">
+                                        <CheckBox IsChecked="{Binding NoFb}" Content="{l:T 'Sin FB: cada variable se escribe desde su origen'}" />
+                                        <Grid IsVisible="{Binding !NoFb}" ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="10" ColumnSpacing="12">
                                             <TextBlock Classes="label" Text="{l:T 'FB al que se llama'}" />
                                             <TextBox Grid.Column="1" Text="{Binding Fb, UpdateSourceTrigger=LostFocus}" Classes="mono" />
                                             <Button Grid.Column="2" Command="{Binding SuggestCommand}" ToolTip.Tip="LoS_ + tipo">
@@ -108,7 +109,7 @@
                                     </StackPanel>
                                 </Border>
 
-                                <Border Classes="card">
+                                <Border Classes="card" IsVisible="{Binding !NoFb}">
                                     <StackPanel Spacing="10">
                                         <TextBlock Classes="caption" Text="{l:T 'INTERFAZ DEL FB'}" />
                                         <TextBlock Classes="mono" Text="{Binding Parameters}" TextWrapping="Wrap" />
@@ -131,9 +132,13 @@
                                         <ListBox Classes="table" ItemsSource="{Binding Variables}" SelectedItem="{Binding SelectedVariable}" MaxHeight="360">
                                             <ListBox.ItemTemplate>
                                                 <DataTemplate x:DataType="vm:TypeVariableViewModel">
-                                                    <Grid ColumnDefinitions="2*,*" ColumnSpacing="10">
+                                                    <Grid ColumnDefinitions="2*,*,Auto" ColumnSpacing="10">
                                                         <TextBox Classes="cell" Text="{Binding Name, UpdateSourceTrigger=LostFocus}" />
                                                         <ComboBox Grid.Column="1" ItemsSource="{Binding DataTypeChoices}" SelectedItem="{Binding DataType}" HorizontalAlignment="Stretch" MaxWidth="220" />
+                                                        <TextBox Grid.Column="2" Classes="cell mono" Width="260"
+                                                                 IsVisible="{Binding $parent[ListBox].((vm:AssetTypeViewModel)DataContext).NoFb}"
+                                                                 Text="{Binding Source, UpdateSourceTrigger=LostFocus}"
+                                                                 PlaceholderText="{l:T 'sin origen: no se escribe'}" />
                                                     </Grid>
                                                 </DataTemplate>
                                             </ListBox.ItemTemplate>

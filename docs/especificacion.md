@@ -46,6 +46,7 @@ La importación a TIA Portal queda fuera: la hará otra app con Openness, que ex
   - Un `Template` que no está en el catálogo se crea con sus variables, pendiente de equivalencia.
   - Si un asset trae una variable que su tipo no tiene, se avisa y se ofrece añadirla al tipo.
   - Los assets sin equivalencia salen marcados y no se generan.
+  - Un tipo se puede marcar «Sin FB» (p. ej. `CE_PLC`): sus assets no tienen llamada ni variable en la estática. Cada variable del tipo lleva un origen (`#LifeBit`, `"DB".a.b`) que se escribe en la región `General` de Struct TO DEVICE; las variables sin origen no se escriben.
 
 ## Operaciones y locations
 
@@ -64,7 +65,7 @@ La importación a TIA Portal queda fuera: la hará otra app con Openness, que ex
 2. Cabecera «Setup Operations».
 3. Un segmento STL por operación, ordenadas por número, con el título «Operation <n> :<locations>».
 4. Cabecera «Call all blocks».
-5. Un segmento LAD por asset, en el orden de la LoS, con el título «<Element> [<UDT>]». Llama al FB de su equivalencia, con la instancia sin el prefijo de línea, el pin `Operation` y el pin del UDT conectado a la variable del asset. Los demás pines quedan sin conectar.
+5. Un segmento LAD por asset, en el orden de la LoS, con el título «<Element> [<UDT>]». Llama al FB de su equivalencia, con la instancia sin el prefijo de línea, el pin `Operation` y el pin del UDT conectado a la variable del asset. Los demás pines de la interfaz conocida quedan abiertos (`OpenCon`).
 6. «Life bit» (`clock1Hz` → `LifeBit`).
 7. Separador.
 8. «Struct TO DEVICE» en SCL, como el segmento 118 del ejemplo. Tiene una REGION `General` y una REGION por celda; dentro de cada celda, `CELLxx_Estado` y una sub-región por asset de operación.

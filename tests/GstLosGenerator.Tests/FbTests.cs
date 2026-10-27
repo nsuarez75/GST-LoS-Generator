@@ -166,6 +166,56 @@ public class FbTests
     }
 
     [Fact]
+    public void Un_tipo_sin_FB_escribe_sus_variables_desde_el_origen_en_General()
+    {
+        var (_, catalog, plc) = Prepared();
+        var type = catalog.Find("CE_PLC")!;
+        type.Fb = "";
+        type.Udt = "";
+        type.NoFb = true;
+        type.Variables.First(v => v.Name == "PLCHeartbeat").Source = "#LifeBit";
+
+        var result = FbGenerator.Generate(plc, catalog, null, new GenerateOptions());
+        var general = Scl(result.Xml, Segments.StructTitle).Split("END_REGION")[0];
+        var statics = FbDocument.Parse(result.Xml).Section("Static").Elements().Select(m => (string?)m.Attribute("Name"));
+
+        Assert.StartsWith("REGION General", general.Trim());
+        Assert.Contains("#Device_11.\"Bool_011_o(000)_04\" := #LifeBit;", general);
+        Assert.DoesNotContain(Titles(result.Xml), t => t.StartsWith("LX9_76_PLC01"));
+        Assert.DoesNotContain("LX9_76_PLC01", statics);
+        Assert.DoesNotContain(result.Warnings, w => w.Contains("LX9_76_PLC01"));
+
+        type.Variables.First(v => v.Name == "PLCHeartbeat").Source = "\"Info_DB\".stat.\"Firma 1\"";
+        var global = Segment(FbGenerator.Generate(plc, catalog, null, new GenerateOptions()).Xml, Segments.StructTitle)
+            .Descendants(FbXml.Scl + "Access").Single(a => (string?)a.Attribute("Scope") == "GlobalVariable");
+        Assert.Equal(["Info_DB", "stat", "Firma 1"], global.Descendants(FbXml.Scl + "Component").Select(c => (string)c.Attribute("Name")!));
+
+        type.Variables.First(v => v.Name == "PLCHeartbeat").Source = "";
+        Assert.DoesNotContain("Bool_011_o(000)_04", Scl(Fresh(plc, catalog), Segments.StructTitle));
+    }
+
+    [Theory]
+    [InlineData("#LifeBit", false, new[] { "LifeBit" })]
+    [InlineData("#Device_11.\"Bool_011_o(000)_04\"", false, new[] { "Device_11", "Bool_011_o(000)_04" })]
+    [InlineData("\"Info_DB\".stat.signature", true, new[] { "Info_DB", "stat", "signature" })]
+    [InlineData("alwaysTrue", true, new[] { "alwaysTrue" })]
+    public void Una_ruta_SCL_se_lee_por_componentes(string text, bool global, string[] components)
+    {
+        var path = SclPath.Parse(text)!;
+        Assert.Equal(global, path.Global);
+        Assert.Equal(components, path.Components);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("#")]
+    [InlineData("#a..b")]
+    [InlineData("#a[1]")]
+    [InlineData("\"DB.a")]
+    [InlineData("#a + 1")]
+    public void Una_ruta_SCL_no_valida_no_se_lee(string text) => Assert.Null(SclPath.Parse(text));
+
+    [Fact]
     public void Un_asset_sin_equivalencia_no_se_genera_y_se_avisa()
     {
         var (_, catalog, plc) = Prepared();

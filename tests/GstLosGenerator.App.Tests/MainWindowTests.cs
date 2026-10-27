@@ -109,9 +109,14 @@ public sealed class MainWindowTests : IDisposable
             Shot(window, $"{(int)kind:00}-{kind}-{suffix}");
         }
 
-        var catalog = new CatalogWindow { DataContext = new CatalogViewModel(main.Session, main.Dialogs), Width = Math.Min(width, 1100), Height = 720 };
+        var catalogVm = new CatalogViewModel(main.Session, main.Dialogs);
+        var catalog = new CatalogWindow { DataContext = catalogVm, Width = Math.Min(width, 1100), Height = 720 };
         catalog.Show();
         Shot(catalog, $"10-catalogo-{suffix}");
+        catalogVm.Selected = catalogVm.Types.First(t => t.Name == "CE_PLC");
+        catalogVm.Selected.NoFb = true;
+        catalogVm.Selected.Variables[0].Source = "#LifeBit";
+        Shot(catalog, $"10b-catalogo-sin-fb-{suffix}");
         catalog.Close();
 
         var generate = new GenerateWindow { DataContext = new GenerateViewModel(main, main.Session.Project.Plcs[0]), Width = Math.Min(width, 1040), Height = 760 };
