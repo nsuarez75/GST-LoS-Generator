@@ -28,6 +28,16 @@ internal sealed class FakeDialogs : IDialogs
     public Task<bool> Choose(string title, string text, string first, string second) =>
         Task.FromResult(Choices.Count == 0 || Choices.Dequeue());
 
+    // Opción que se elige en Pick; null: la que viene marcada.
+    public int? PickAnswer { get; set; }
+    public List<IReadOnlyList<string>> PickLists { get; } = [];
+
+    public Task<int?> Pick(string title, string text, IReadOnlyList<string> options, int selected = 0)
+    {
+        PickLists.Add(options);
+        return Task.FromResult<int?>(PickAnswer ?? selected);
+    }
+
     public Task<SaveChoice> AskSave() => Task.FromResult(SaveChoice.Discard);
 
     public Task<(bool Accepted, bool Option)> Changes(string title, IReadOnlyList<string> changes, IReadOnlyList<string> warnings, string? option = null)

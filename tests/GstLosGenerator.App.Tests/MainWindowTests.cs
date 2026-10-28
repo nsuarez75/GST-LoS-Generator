@@ -8,6 +8,7 @@ using Avalonia.Threading;
 using GstLosGenerator.App.ViewModels;
 using GstLosGenerator.App.Views;
 using GstLosGenerator.Core;
+using GstLosGenerator.Core.Fb;
 using GstLosGenerator.Tests;
 using Location = GstLosGenerator.Core.Location;
 
@@ -322,6 +323,30 @@ public sealed class MainWindowTests : IDisposable
         Assert.Equal(["ProductionStatus", "CellWorkingEvent"], VariableNames(main, "LX9_01_CELL01"));
         Assert.Contains("DoorOpen01", VariableNames(main, "LX9_01_1000FIX01_01_MOVEHR"));
         Assert.Equal("DoorOpen01", Assert.Single(main.Session.Project.Plcs[0].VariableMoves).Name);
+    }
+
+    [AvaloniaFact]
+    public async Task En_el_catalogo_se_aprende_un_tipo_de_un_FB_eligiendo_la_llamada()
+    {
+        var (_, main, dialogs) = await Open();
+        var generate = new GenerateViewModel(main, main.Session.Project.Plcs[0]);
+        dialogs.Folder = Path.Combine(_dir, "salida");
+        await generate.GenerateCommand.ExecuteAsync(null);
+        var catalog = new CatalogViewModel(main.Session, dialogs);
+        dialogs.Prompts.Enqueue(["ROBOT_NUEVO"]);
+        await catalog.AddCommand.ExecuteAsync(null);
+        var options = TypeLearner.Sources(File.ReadAllText(Path.Combine(dialogs.Folder, "User_LoS_Device_In_FB.xml")));
+        dialogs.PickAnswer = options.FindIndex(o => o.Fb == "LoS_AS_ROBOT");
+        dialogs.Files.Enqueue(Path.Combine(dialogs.Folder, "User_LoS_Device_In_FB.xml"));
+
+        await catalog.LearnFromFbCommand.ExecuteAsync(null);
+
+        Assert.Equal(options.Select(o => o.Label), Assert.Single(dialogs.PickLists));
+        var type = main.Session.Catalog.Find("ROBOT_NUEVO")!;
+        Assert.Equal(("LoS_AS_ROBOT", "LoS_AS_ROBOT_UDT", "AS_ROBOT"), (type.Fb, type.Udt, type.UdtPin));
+        Assert.Equal("ROBOT_NUEVO", catalog.Selected!.Name);
+        main.UndoCommand.Execute(null);
+        Assert.Equal("", main.Session.Catalog.Find("ROBOT_NUEVO")!.Fb);
     }
 
     [AvaloniaFact]
