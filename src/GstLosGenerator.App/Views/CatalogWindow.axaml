@@ -111,7 +111,16 @@
 
                                 <Border Classes="card" IsVisible="{Binding !NoFb}">
                                     <StackPanel Spacing="10">
-                                        <TextBlock Classes="caption" Text="{l:T 'INTERFAZ DEL FB'}" />
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Classes="caption" Text="{l:T 'INTERFAZ DEL FB'}" VerticalAlignment="Center" />
+                                            <Button Grid.Column="1" Command="{Binding $parent[Window].((vm:CatalogViewModel)DataContext).LearnFromFbCommand}"
+                                                    ToolTip.Tip="{l:T 'Rellena la equivalencia y la interfaz desde un XML de FB exportado de TIA. Solo toca este tipo.'}">
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <c:Icon Kind="file-code" />
+                                                    <TextBlock Text="{l:T 'Aprender de un FB…'}" />
+                                                </StackPanel>
+                                            </Button>
+                                        </Grid>
                                         <TextBlock Classes="mono" Text="{Binding Parameters}" TextWrapping="Wrap" />
                                     </StackPanel>
                                 </Border>

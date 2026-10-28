@@ -28,6 +28,9 @@ public interface IDialogs
     // Lista de cambios para aceptar o cancelar; option es una casilla opcional (marcada de inicio).
     Task<(bool Accepted, bool Option)> Changes(string title, IReadOnlyList<string> changes, IReadOnlyList<string> warnings, string? option = null);
 
+    // Elegir una opción de una lista (empieza marcada la de selected); null si se cancela.
+    Task<int?> Pick(string title, string text, IReadOnlyList<string> options, int selected = 0);
+
     // Varios campos de texto; null si se cancela.
     Task<string[]?> Prompt(string title, IReadOnlyList<string> labels, IReadOnlyList<string> values);
 

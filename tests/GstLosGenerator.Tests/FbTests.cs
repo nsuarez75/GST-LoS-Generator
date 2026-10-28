@@ -589,6 +589,64 @@ public class FbTests
         Assert.DoesNotContain(sync.Changes, c => c.StartsWith(L.T("Orden de las operaciones: {0}", ""), StringComparison.Ordinal));
     }
 
+    // FB generado con la interfaz del robot conocida y la operación 110 asignada al robot.
+    private static (Catalog Catalog, string Xml) CallerFb()
+    {
+        var (_, catalog, plc) = Prepared();
+        catalog.Find("AS_ROBOT")!.Parameters = [new("NumberRobot", "Input", "Int"), new("Operation", "Input", "\"I40_FixtureCfg_UDT\""),
+            new("AS_ROBOT", "Output", "\"LoS_AS_ROBOT_UDT\"")];
+        plc.FindAsset("LX9_01_1000FIX01_01_MOVEHR_01_R")!.Operation = "110";
+        return (catalog, Fresh(plc, catalog));
+    }
+
+    [Fact]
+    public void Aprender_un_tipo_de_un_FB_que_lo_llama_rellena_equivalencia_e_interfaz()
+    {
+        var (catalog, xml) = CallerFb();
+
+        var sources = TypeLearner.Sources(xml);
+        Assert.Equal(sources.Select(s => s.Fb).Distinct().Count(), sources.Count);
+        var source = sources.Single(s => s.Fb == "LoS_AS_ROBOT");
+        var type = new AssetType { Name = "ROBOT_NUEVO" };
+        Assert.NotEmpty(TypeLearner.Differences(type, source));
+        TypeLearner.Apply(type, source);
+
+        Assert.Equal(("LoS_AS_ROBOT", "LoS_AS_ROBOT_UDT", "AS_ROBOT", "Output", "Operation"),
+            (type.Fb, type.Udt, type.UdtPin, type.UdtPinSection, type.OperationPin));
+        Assert.Equal(catalog.Find("AS_ROBOT")!.Parameters, type.Parameters);
+        Assert.Empty(TypeLearner.Differences(type, source));
+    }
+
+    [Fact]
+    public void Aprender_de_una_llamada_sin_titulo_de_asset_encuentra_el_UDT_por_la_variable()
+    {
+        var (_, xml) = CallerFb();
+        xml = xml.Replace("LX9_01_1000FIX01_01_MOVEHR_01_R [LoS_AS_ROBOT]", "Robot de carga");
+
+        var source = TypeLearner.Sources(xml).Single(s => s.Fb == "LoS_AS_ROBOT");
+
+        Assert.Equal(("LoS_AS_ROBOT_UDT", "AS_ROBOT", "Operation"), (source.Udt, source.UdtPin, source.OperationPin));
+    }
+
+    [Fact]
+    public void Aprender_del_propio_FB_del_tipo_toma_su_interfaz()
+    {
+        var doc = FbDocument.CreateEmpty();
+        doc.Block.Element("AttributeList")!.Element("Name")!.Value = "LoS_AS_ROBOT";
+        void Member(string section, string name, string type) =>
+            doc.Section(section).Add(new XElement(FbXml.Interface + "Member", new XAttribute("Name", name), new XAttribute("Datatype", type)));
+        Member("Input", "NumberRobot", "Int");
+        Member("Input", "Operation", "\"I40_FixtureCfg_UDT\"");
+        Member("Output", "Busy", "Bool");
+        Member("InOut", "AS_ROBOT", "\"LoS_AS_ROBOT_UDT\"");
+
+        var source = Assert.Single(TypeLearner.Sources(doc.Write()));
+
+        Assert.Equal(("LoS_AS_ROBOT", "LoS_AS_ROBOT_UDT", "AS_ROBOT", "InOut", "Operation"),
+            (source.Fb, source.Udt, source.UdtPin, source.UdtPinSection, source.OperationPin));
+        Assert.Equal(["NumberRobot", "Operation", "Busy", "AS_ROBOT"], source.Parameters.Select(p => p.Name));
+    }
+
     // ---------------------------------------------------------------- utilidades
 
     private static XElement Segment(string xml, string title) =>

@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GstLosGenerator.Core;
+using GstLosGenerator.Core.Fb;
 
 namespace GstLosGenerator.App.ViewModels;
 
@@ -108,6 +109,66 @@ public sealed partial class CatalogViewModel : EditableViewModel
         }
     }
 
+    // Rellena la equivalencia y la interfaz del tipo seleccionado desde un XML de FB exportado de TIA.
+    // Solo toca ese tipo; antes de aplicar enseña las diferencias.
+    [RelayCommand]
+    private async Task LearnFromFb()
+    {
+        if (Selected is not { } vm)
+        {
+            return;
+        }
+        var title = L.T("Aprender {0} de un FB", vm.Type.Name);
+        var path = await _dialogs.OpenFile(title, MainViewModel.XmlFilter);
+        if (path is null)
+        {
+            return;
+        }
+        List<LearnSource> sources;
+        try
+        {
+            sources = TypeLearner.Sources(await File.ReadAllTextAsync(path));
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or FbFormatException)
+        {
+            await _dialogs.Message(title, L.T("No se pudo leer el FB: {0}", e.Message));
+            return;
+        }
+        if (sources.Count == 0)
+        {
+            await _dialogs.Message(title, L.T("El XML no llama a ningún FB ni tiene una interfaz de la que aprender."));
+            return;
+        }
+        var source = sources[0];
+        if (sources.Count > 1)
+        {
+            var current = sources.FindIndex(s => s.Fb == vm.Type.Fb);
+            var index = await _dialogs.Pick(title, L.T("El XML llama a varios FB. Elige el que corresponde a {0}:", vm.Type.Name),
+                sources.Select(s => s.Label).ToList(), Math.Max(current, 0));
+            if (index is not { } chosen)
+            {
+                return;
+            }
+            source = sources[chosen];
+        }
+        var changes = TypeLearner.Differences(vm.Type, source);
+        if (changes.Count == 0)
+        {
+            await _dialogs.Message(title, L.T("El tipo ya coincide con el FB."));
+            return;
+        }
+        var warnings = source.UdtPin is null ? [L.T("No se ve qué pin lleva el UDT; esa parte del tipo no se toca.")] : new List<string>();
+        var (accepted, _) = await _dialogs.Changes(L.T("{0}: {1}", title, Path.GetFileName(path)), changes, warnings);
+        if (!accepted)
+        {
+            return;
+        }
+        Session.Change("learn-type", () => TypeLearner.Apply(vm.Type, source));
+        Selected = null;
+        Build();
+        Selected = Types.FirstOrDefault(t => t.Type == vm.Type) ?? Selected;
+    }
+
     // Los tipos del archivo se añaden o sustituyen a los del mismo nombre; el resto se queda.
     [RelayCommand]
     private async Task Import()
@@ -190,7 +251,7 @@ public sealed partial class AssetTypeViewModel : EditableViewModel
         }
     }
     public string Parameters => Type.Parameters.Count == 0
-        ? L.T("Se aprende al leer un FB que use este tipo.")
+        ? L.T("Se aprende al leer un FB que use este tipo o con «Aprender de un FB…».")
         : string.Join("\n", Type.Parameters.Select(p => $"{p.Name}  ({p.Section})  {p.Type}"));
 
     public string Fb
