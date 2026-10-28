@@ -13,6 +13,8 @@ public sealed class FbPlan
     public List<SclRegion> Regions { get; } = [];
     // Para cada región de Struct TO DEVICE, los assets cuyas variables lleva.
     public Dictionary<string, HashSet<string>> RegionAssets { get; } = [];
+    // Para cada asset de un tipo sin FB, las líneas que escribe en General.
+    public Dictionary<string, List<DeviceAssignment>> DirectWrites { get; } = [];
     public List<(string Device, string Member)> Floats { get; } = [];
     public List<(string Device, string Member, string SwapType)> Swaps { get; } = [];
     public List<string> Warnings { get; } = [];
@@ -141,7 +143,9 @@ public sealed class FbPlan
         }
         foreach (var asset in tree.InOrder().Where(a => direct.ContainsKey(a.Element)))
         {
-            general.AddRange(DirectAssignments(asset, direct[asset.Element]));
+            var writes = DirectAssignments(asset, direct[asset.Element]);
+            DirectWrites[asset.Element] = writes;
+            general.AddRange(writes);
             generalAssets.Add(asset.Element);
         }
         Regions.Insert(0, new SclRegion("General", general, []));

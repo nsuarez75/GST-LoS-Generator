@@ -194,6 +194,32 @@ public class FbTests
         Assert.DoesNotContain("Bool_011_o(000)_04", Scl(Fresh(plc, catalog), Segments.StructTitle));
     }
 
+    [Fact]
+    public void La_linea_de_un_tipo_sin_FB_se_anade_a_General_aunque_el_asset_no_este_marcado()
+    {
+        var (_, catalog, plc) = Prepared();
+        var type = catalog.Find("CE_PLC")!;
+        type.Fb = "";
+        type.Udt = "";
+        type.NoFb = true;
+        // El FB actual se generó cuando la variable aún no tenía origen: General está vacía.
+        var current = Fresh(plc, catalog);
+        Assert.DoesNotContain("Bool_011_o(000)_04", Scl(current, Segments.StructTitle));
+        type.Variables.First(v => v.Name == "PLCHeartbeat").Source = "#LifeBit";
+        var line = "#Device_11.\"Bool_011_o(000)_04\" := #LifeBit;";
+
+        foreach (var parts in new[] { FbParts.Struct, FbParts.None })
+        {
+            var xml = FbGenerator.Generate(plc, catalog, current, new GenerateOptions { Parts = parts }).Xml;
+            var general = Scl(xml, Segments.StructTitle).Split("END_REGION")[0];
+            Assert.Contains(line, general);
+
+            // Si ya está, no se repite.
+            var again = FbGenerator.Generate(plc, catalog, xml, new GenerateOptions { Parts = parts }).Xml;
+            Assert.Single(Scl(again, Segments.StructTitle).Split('\n'), l => l.Contains(line));
+        }
+    }
+
     [Theory]
     [InlineData("#LifeBit", false, new[] { "LifeBit" })]
     [InlineData("#Device_11.\"Bool_011_o(000)_04\"", false, new[] { "Device_11", "Bool_011_o(000)_04" })]

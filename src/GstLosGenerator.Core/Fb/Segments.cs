@@ -430,11 +430,7 @@ public sealed class SclWriter
     {
         Indent(depth);
         Token("REGION").Blank().Text(region.Name).NewLine();
-        foreach (var a in region.Assignments)
-        {
-            Indent(depth + 1);
-            Add(Local(a.Device, a.Member)).Blank().Token(":=").Blank().Add(Access(a.Source)).Token(";").NewLine();
-        }
+        Assignments(region.Assignments, depth + 1);
         for (var i = 0; i < region.Children.Count; i++)
         {
             if (i > 0 || region.Assignments.Count > 0)
@@ -445,6 +441,16 @@ public sealed class SclWriter
         }
         Indent(depth);
         Token("END_REGION").NewLine(depth == 0 ? 2 : 1);
+    }
+
+    // #Device."Miembro" := origen; una por línea.
+    public void Assignments(IEnumerable<DeviceAssignment> assignments, int depth)
+    {
+        foreach (var a in assignments)
+        {
+            Indent(depth);
+            Add(Local(a.Device, a.Member)).Blank().Token(":=").Blank().Add(Access(a.Source)).Token(";").NewLine();
+        }
     }
 
     private void Indent(int depth)
