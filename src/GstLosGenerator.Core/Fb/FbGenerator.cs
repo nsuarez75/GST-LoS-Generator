@@ -120,6 +120,11 @@ public static class FbGenerator
                 RegionMerge.Update(existing.Unit, unit, plan, options.Parts.HasFlag(FbParts.Struct) ? options.Assets : []);
                 continue;
             }
+            // El título de una operación (su comentario) se pone siempre, aunque el segmento no se reescriba.
+            if (key.StartsWith("op:", StringComparison.Ordinal) && FbXml.Title(unit) is var title && existing.Title != title)
+            {
+                FbXml.SetTitle(existing.Unit, title);
+            }
             if (!ShouldRewrite(key, asset, options))
             {
                 continue;

@@ -452,6 +452,65 @@ public class FbTests
         Assert.Equal("AS_ROBOT", robot.UdtPin);
     }
 
+    [Fact]
+    public void Con_comentario_el_titulo_de_la_operacion_lo_lleva_en_vez_de_las_locations()
+    {
+        var (_, catalog, plc) = Prepared();
+        var operation = plc.FindOperation("110")!;
+
+        Assert.Equal("Operation 110 :1000+FIX01, 1000+FIX02", Segments.OperationTitle(operation));
+        operation.Comment = "Carga de piezas";
+        Assert.Equal("Operation 110: Carga de piezas", Segments.OperationTitle(operation));
+        Assert.Contains("Operation 110: Carga de piezas", Titles(Fresh(plc, catalog)));
+    }
+
+    [Fact]
+    public void El_comentario_cambia_el_titulo_del_FB_actual_sin_marcar_operaciones()
+    {
+        var (_, catalog, plc) = Prepared();
+        // Cambio a mano en TIA que no se debe perder.
+        var current = Fresh(plc, catalog).Replace("<ConstantValue>3</ConstantValue>", "<ConstantValue>9</ConstantValue>");
+        plc.FindOperation("110")!.Comment = "Carga de piezas";
+
+        var xml = FbGenerator.Generate(plc, catalog, current, new GenerateOptions()).Xml;
+
+        Assert.DoesNotContain("Operation 110 :1000+FIX01, 1000+FIX02", Titles(xml));
+        Assert.Contains("L 9", Stl(xml, "Operation 110: Carga de piezas"));
+    }
+
+    [Fact]
+    public void Leer_FB_recupera_el_comentario_y_las_locations_por_su_numero()
+    {
+        var (project, catalog, plc) = Prepared();
+        plc.FindOperation("110")!.Comment = "Carga de piezas";
+        var xml = Fresh(plc, catalog);
+        var clean = Storage.Clone(project).Plcs[0];
+        clean.Operations.Clear();
+
+        FbSyncPlan.Create(clean, catalog, xml).Apply();
+
+        var read = clean.FindOperation("110")!;
+        Assert.Equal("Carga de piezas", read.Comment);
+        Assert.Equal(["1000+FIX01", "1000+FIX02"], read.Locations.Select(l => l.Location));
+
+        clean.FindOperation("110")!.Comment = "";
+        var sync = FbSyncPlan.Create(clean, catalog, xml);
+        Assert.Equal([L.T("Operación {0}: comentario «{1}» → «{2}»", "110", "", "Carga de piezas")], sync.Changes);
+    }
+
+    [Fact]
+    public void Leer_FB_sin_comentario_deja_el_comentario_vacio()
+    {
+        var (project, catalog, plc) = Prepared();
+        var xml = Fresh(plc, catalog);
+        var clean = Storage.Clone(project).Plcs[0];
+        clean.Operations.Clear();
+
+        FbSyncPlan.Create(clean, catalog, xml).Apply();
+
+        Assert.Equal("", clean.FindOperation("110")!.Comment);
+    }
+
     // ---------------------------------------------------------------- utilidades
 
     private static XElement Segment(string xml, string title) =>
