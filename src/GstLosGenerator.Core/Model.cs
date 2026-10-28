@@ -25,6 +25,8 @@ public sealed class Plc
     public List<Asset> Assets { get; set; } = [];
     public List<Location> Locations { get; set; } = [];
     public List<Operation> Operations { get; set; } = [];
+    // Las operaciones van en el orden de la lista, elegido a mano; si no, por número.
+    public bool CustomOperationOrder { get; set; }
     // FB tal como está en TIA, leído con «Leer FB». Es la base de la siguiente generación.
     public string? CurrentFb { get; set; }
     public string? CurrentFbFile { get; set; }
@@ -35,6 +37,10 @@ public sealed class Plc
     public Location? FindLocation(string name) => Locations.FirstOrDefault(l => l.Name == name);
 
     public string DeviceName(int device) => Naming.DeviceName(Number, device);
+
+    // Operaciones en el orden de sus segmentos en el FB.
+    public List<Operation> OrderedOperations() =>
+        CustomOperationOrder ? [.. Operations] : [.. Operations.OrderBy(o => o.Id, Fb.OperationIdComparer.Instance)];
 }
 
 public sealed class Device

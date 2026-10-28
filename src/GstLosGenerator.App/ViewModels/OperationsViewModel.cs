@@ -21,7 +21,7 @@ public sealed partial class OperationsViewModel : EditableViewModel, ISelectable
     {
         _dialogs = dialogs;
         Plc = plc;
-        foreach (var operation in plc.Operations.OrderBy(o => o.Id, OperationIdComparer.Instance))
+        foreach (var operation in plc.OrderedOperations())
         {
             Operations.Add(new OperationViewModel(session, plc, operation));
         }
@@ -29,6 +29,49 @@ public sealed partial class OperationsViewModel : EditableViewModel, ISelectable
     }
 
     public bool IsEmpty => Operations.Count == 0;
+
+    // Orden elegido arrastrando; si no, por número.
+    public bool HasCustomOrder => Plc.CustomOperationOrder;
+
+    // Lleva una operación a otra posición de la lista (arrastrándola). El orden es el de los segmentos del FB.
+    public void Move(OperationViewModel operation, int target)
+    {
+        var index = Operations.IndexOf(operation);
+        if (index < 0 || target < 0 || target >= Operations.Count || index == target)
+        {
+            return;
+        }
+        Session.Change("move-operation", () =>
+        {
+            var ordered = Plc.OrderedOperations();
+            ordered.Remove(operation.Operation);
+            ordered.Insert(target, operation.Operation);
+            Plc.Operations = ordered;
+            Plc.CustomOperationOrder = true;
+        });
+        Operations.Move(index, target);
+        Selected = operation;
+        OnPropertyChanged(nameof(HasCustomOrder));
+    }
+
+    [RelayCommand]
+    private void SortByNumber()
+    {
+        Session.Change("sort-operations", () =>
+        {
+            Plc.CustomOperationOrder = false;
+            Plc.Operations = Plc.OrderedOperations();
+        });
+        var selected = Selected;
+        var sorted = Operations.OrderBy(o => o.Operation.Id, OperationIdComparer.Instance).ToList();
+        Operations.Clear();
+        foreach (var operation in sorted)
+        {
+            Operations.Add(operation);
+        }
+        Selected = selected;
+        OnPropertyChanged(nameof(HasCustomOrder));
+    }
 
     public void Select(string subject) => Selected = Operations.FirstOrDefault(o => o.Operation.Id == subject) ?? Selected;
 
@@ -50,7 +93,8 @@ public sealed partial class OperationsViewModel : EditableViewModel, ISelectable
         var operation = new Operation { Id = id };
         Session.Change("add-operation", () => Plc.Operations.Add(operation));
         var vm = new OperationViewModel(Session, Plc, operation);
-        Operations.Add(vm);
+        // Con orden propio va al final; si no, en su sitio por número.
+        Operations.Insert(Plc.OrderedOperations().IndexOf(operation), vm);
         Selected = vm;
         OnPropertyChanged(nameof(IsEmpty));
     }
@@ -90,6 +134,13 @@ public sealed partial class OperationViewModel : EditableViewModel
 
     [ObservableProperty]
     public partial string AssetFilter { get; set; } = "";
+
+    // Al arrastrar otra operación: caería delante o detrás de esta.
+    [ObservableProperty]
+    public partial bool DropBefore { get; set; }
+
+    [ObservableProperty]
+    public partial bool DropAfter { get; set; }
 
     public OperationViewModel(Session session, Plc plc, Operation operation) : base(session)
     {
