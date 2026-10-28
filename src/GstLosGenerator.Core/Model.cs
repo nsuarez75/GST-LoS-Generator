@@ -27,6 +27,8 @@ public sealed class Plc
     public List<Operation> Operations { get; set; } = [];
     // Las operaciones van en el orden de la lista, elegido a mano; si no, por número.
     public bool CustomOperationOrder { get; set; }
+    // Variables movidas a mano de un asset a otro; se vuelven a aplicar al importar la LoS.
+    public List<VariableMove> VariableMoves { get; set; } = [];
     // FB tal como está en TIA, leído con «Leer FB». Es la base de la siguiente generación.
     public string? CurrentFb { get; set; }
     public string? CurrentFbFile { get; set; }
@@ -105,6 +107,14 @@ public sealed class AssetVariable
 
     [JsonIgnore]
     public bool IsOutput => Direction.Equals("OUT", StringComparison.OrdinalIgnoreCase);
+}
+
+public sealed class VariableMove
+{
+    // Asset donde la pone la LoS y asset al que se movió.
+    public string From { get; set; } = "";
+    public string To { get; set; } = "";
+    public string Name { get; set; } = "";
 }
 
 public sealed class Location

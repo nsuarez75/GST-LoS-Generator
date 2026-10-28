@@ -20,6 +20,9 @@ public interface IDialogs
 
     Task<bool> Confirm(string title, string text, string accept);
 
+    // Pregunta con dos respuestas; true si se elige la primera. Cerrar la ventana elige la segunda.
+    Task<bool> Choose(string title, string text, string first, string second);
+
     Task<SaveChoice> AskSave();
 
     // Lista de cambios para aceptar o cancelar; option es una casilla opcional (marcada de inicio).

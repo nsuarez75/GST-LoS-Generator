@@ -96,10 +96,12 @@
                     </Grid>
                 </Border>
 
-                <TreeView ItemsSource="{Binding Roots}" SelectedItem="{Binding Selected}" Margin="4,0,8,8" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <!-- Varias variables se seleccionan con Mayús+clic o Ctrl+clic; se arrastran a otro asset por su asa -->
+                <TreeView x:Name="Tree" ItemsSource="{Binding Roots}" SelectedItem="{Binding Selected}" SelectionMode="Multiple"
+                          Margin="4,0,8,8" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                     <TreeView.DataTemplates>
                         <TreeDataTemplate DataType="vm:AssetNodeViewModel" ItemsSource="{Binding Children}">
-                            <Grid ColumnDefinitions="22,*,Auto,Auto,Auto" Height="32">
+                            <Grid ColumnDefinitions="22,*,Auto,Auto,Auto" Height="32" Classes.droptarget="{Binding IsDropTarget}">
                                 <TextBlock Classes="label" Text="{Binding KindGlyph}" />
                                 <TextBlock Grid.Column="1" Text="{Binding Element}" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
                                            ToolTip.Tip="{Binding Element}" Margin="0,0,8,0" />
@@ -112,7 +114,13 @@
                             <Grid ColumnDefinitions="22,*,Auto,Auto,Auto" Height="30" Classes.off="{Binding !Enabled}">
                                 <CheckBox IsChecked="{Binding Enabled}" MinWidth="0" Padding="0" VerticalAlignment="Center"
                                           ToolTip.Tip="{l:T 'Sin marcar, la señal está desactivada: en Struct TO DEVICE se escribe comentada.'}" />
-                                <TextBox Classes="cell" Grid.Column="1" Text="{Binding Name, UpdateSourceTrigger=LostFocus}" Margin="0,0,8,0" ToolTip.Tip="{Binding Description}" />
+                                <Grid Grid.Column="1" ColumnDefinitions="Auto,*" Margin="0,0,8,0">
+                                    <Border Classes="grip" Background="Transparent" Cursor="SizeAll" Padding="0,0,4,0" VerticalAlignment="Stretch"
+                                            ToolTip.Tip="{l:T 'Arrastra la variable a otro asset para moverla.'}">
+                                        <c:Icon Kind="grip" Width="14" Height="14" VerticalAlignment="Center" Foreground="{DynamicResource App.TextMuted}" />
+                                    </Border>
+                                    <TextBox Classes="cell" Grid.Column="1" Text="{Binding Name, UpdateSourceTrigger=LostFocus}" ToolTip.Tip="{Binding Description}" />
+                                </Grid>
                                 <TextBox Classes="cell colType" Grid.Column="2" Text="{Binding DataType, UpdateSourceTrigger=LostFocus}" Margin="0,0,8,0" />
                                 <ComboBox Grid.Column="3" Classes="colOp" ItemsSource="{x:Static vm:VariableRowViewModel.Directions}" SelectedItem="{Binding Direction}" Margin="0,0,8,0" />
                                 <TextBox Classes="cell mono colState" Grid.Column="4" Text="{Binding Address, UpdateSourceTrigger=LostFocus}" />

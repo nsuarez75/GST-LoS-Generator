@@ -220,13 +220,73 @@ public sealed partial class AssetsViewModel : EditableViewModel, ISelectable
     [RelayCommand]
     private void RemoveVariable()
     {
-        if (Selected is not VariableRowViewModel row)
+        if (Selected is VariableRowViewModel row)
+        {
+            RemoveVariables([row]);
+        }
+    }
+
+    // Quita de una vez las variables seleccionadas (Mayús+clic o Ctrl+clic); se deshace con un solo Ctrl+Z.
+    public void RemoveVariables(IReadOnlyList<VariableRowViewModel> rows)
+    {
+        if (rows.Count == 0)
         {
             return;
         }
-        Session.Change("remove-variable", () => row.Owner.Asset.Variables.Remove(row.Variable));
-        row.Owner.Children.Remove(row);
-        Selected = row.Owner;
+        Session.Change("remove-variable", () =>
+        {
+            foreach (var row in rows)
+            {
+                row.Owner.Asset.Variables.Remove(row.Variable);
+            }
+        });
+        foreach (var row in rows)
+        {
+            row.Owner.Children.Remove(row);
+        }
+        Selected = rows[0].Owner;
+    }
+
+    // Mueve variables a otro asset del mismo PLC (arrastrándolas). Las que el destino ya tiene no se mueven.
+    public async Task MoveVariables(IReadOnlyList<VariableRowViewModel> rows, AssetNodeViewModel target)
+    {
+        var messages = new List<string>();
+        var movable = new List<VariableRowViewModel>();
+        foreach (var row in rows.Where(r => r.Owner != target))
+        {
+            // Dos variables con el mismo nombre (de assets distintos) tampoco caben juntas en el destino.
+            var reason = VariableMover.CannotMove(target.Asset, row.Variable)
+                ?? (movable.Any(m => m.Variable.Name == row.Variable.Name) ? L.T("{0} ya tiene una variable {1}; no se mueve.", target.Element, row.Variable.Name) : null);
+            if (reason is not null)
+            {
+                messages.Add(reason);
+                continue;
+            }
+            movable.Add(row);
+        }
+        if (movable.Count > 0)
+        {
+            Session.Change("move-variables", () =>
+            {
+                foreach (var row in movable)
+                {
+                    messages.AddRange(VariableMover.Move(Plc, Session.Catalog, row.Owner.Asset, target.Asset, row.Variable));
+                }
+            });
+            VariableRowViewModel? last = null;
+            foreach (var row in movable)
+            {
+                row.Owner.Children.Remove(row);
+                last = new VariableRowViewModel(Session, target, row.Variable);
+                target.Children.Insert(target.Asset.Variables.IndexOf(row.Variable), last);
+            }
+            target.IsExpanded = true;
+            Selected = last;
+        }
+        if (messages.Count > 0 && _dialogs is not null)
+        {
+            await _dialogs.Message(L.T("Mover variables"), string.Join("\n", messages));
+        }
     }
 
     [RelayCommand]
@@ -253,6 +313,10 @@ public sealed partial class AssetNodeViewModel(AssetsViewModel owner, Asset asse
 
     [ObservableProperty]
     public partial bool IsExpanded { get; set; }
+
+    // Al arrastrar variables: el asset sobre el que caerían.
+    [ObservableProperty]
+    public partial bool IsDropTarget { get; set; }
 
     public string Element => Asset.Element;
     public IReadOnlyList<string> TypeNames => Owner.TypeNames;

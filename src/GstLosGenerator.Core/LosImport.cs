@@ -1,6 +1,6 @@
 // Aplica una LoS a un proyecto, nuevo o ya trabajado. Primero se calcula un plan con todos los cambios
 // para enseñárselo al usuario; solo al aceptarlo se aplica. Lo hecho a mano se conserva:
-// operaciones, tipos cambiados, assets manuales.
+// operaciones, tipos cambiados, assets manuales y, si el usuario quiere, variables movidas.
 namespace GstLosGenerator.Core;
 
 public enum ChangeKind
@@ -35,6 +35,17 @@ public sealed record Change(ChangeKind Kind, string Plc, string Subject, string 
     };
 }
 
+// Variable que la LoS sigue poniendo en su asset de origen y que se había movido a otro.
+public sealed class MovedVariable(string plc, VariableMove move)
+{
+    public string Plc { get; } = plc;
+    public VariableMove Move { get; } = move;
+    // Mantenerla donde se movió; si no, manda la LoS y se olvida el movimiento.
+    public bool Keep { get; set; } = true;
+
+    public string Text => L.T("{0}: la LoS pone la variable {1} en {2}, pero la moviste a {3}.", Plc, Move.Name, Move.From, Move.To);
+}
+
 public sealed class LosImportPlan
 {
     private readonly Project _project;
@@ -42,6 +53,8 @@ public sealed class LosImportPlan
     private readonly LosData _data;
 
     public List<Change> Changes { get; } = [];
+    // Variables movidas a mano que la LoS trae otra vez en su origen: se pregunta por cada una.
+    public List<MovedVariable> MovedVariables { get; } = [];
     // Añadir al tipo las variables que traen los assets y el tipo no tiene.
     public bool AddVariablesToTypes { get; set; } = true;
 
@@ -57,8 +70,73 @@ public sealed class LosImportPlan
     public static LosImportPlan Create(Project project, Catalog catalog, LosData data)
     {
         var plan = new LosImportPlan(project, catalog, data);
+        plan.FindMovedVariables();
         plan.Compute();
         return plan;
+    }
+
+    // Vuelve a calcular los cambios tras decidir qué variables movidas se mantienen.
+    public void Refresh()
+    {
+        Changes.Clear();
+        Compute();
+    }
+
+    private void FindMovedVariables()
+    {
+        foreach (var losPlc in _data.Plcs)
+        {
+            if (_project.FindPlc(losPlc.Name) is not { } plc)
+            {
+                continue;
+            }
+            foreach (var move in plc.VariableMoves)
+            {
+                if (losPlc.Assets.FirstOrDefault(a => a.Element == move.From) is { } origin && origin.Variables.Any(v => v.Name == move.Name))
+                {
+                    MovedVariables.Add(new MovedVariable(plc.Name, move));
+                }
+            }
+        }
+    }
+
+    // Movimientos que siguen valiendo: los que el usuario mantiene y los de un origen que la LoS no trae
+    // (asset manual). Si la LoS trae el origen sin la variable, el movimiento ya no hace falta.
+    private List<VariableMove> KeptMoves(Plc plc, LosPlc losPlc) =>
+        plc.VariableMoves.Where(m => MovedVariables.FirstOrDefault(q => q.Move == m) is { } question
+            ? question.Keep
+            : losPlc.Assets.All(a => a.Element != m.From)).ToList();
+
+    // Variables de cada asset de la LoS con los movimientos que se mantienen ya aplicados.
+    private Dictionary<string, List<AssetVariable>> LosVariables(Plc? plc, LosPlc losPlc)
+    {
+        var result = losPlc.Assets.ToDictionary(a => a.Element, a => a.Variables.ToList());
+        if (plc is null)
+        {
+            return result;
+        }
+        foreach (var move in KeptMoves(plc, losPlc))
+        {
+            var origin = result.GetValueOrDefault(move.From);
+            var fromLos = origin?.FirstOrDefault(v => v.Name == move.Name);
+            if (!result.TryGetValue(move.To, out var to))
+            {
+                // El destino no es de la LoS (asset manual): ya tiene la variable, solo se quita del origen.
+                if (fromLos is not null)
+                {
+                    origin!.Remove(fromLos);
+                }
+                continue;
+            }
+            var variable = fromLos ?? plc.FindAsset(move.To)?.Variables.FirstOrDefault(v => v.Name == move.Name);
+            if (variable is null || to.Any(v => v.Name == move.Name))
+            {
+                continue;
+            }
+            origin?.Remove(variable);
+            to.Add(variable);
+        }
+        return result;
     }
 
     private void Compute()
@@ -76,6 +154,7 @@ public sealed class LosImportPlan
                 continue;
             }
             CompareDevices(plc, losPlc);
+            var variables = LosVariables(plc, losPlc);
             var inLos = losPlc.Assets.Select(a => a.Element).ToHashSet();
             foreach (var asset in losPlc.Assets)
             {
@@ -97,7 +176,7 @@ public sealed class LosImportPlan
                 {
                     Changes.Add(new(ChangeKind.AssetTypeChanged, plc.Name, asset.Element, $"{existing.Type} → {asset.Type}"));
                 }
-                var diff = VariableDiff(existing.Variables, asset.Variables);
+                var diff = VariableDiff(existing.Variables, variables[asset.Element]);
                 if (diff.Length > 0)
                 {
                     Changes.Add(new(ChangeKind.VariablesChanged, plc.Name, asset.Element, diff));
@@ -190,17 +269,21 @@ public sealed class LosImportPlan
                 _project.Plcs.Add(plc);
             }
             plc.Devices = losPlc.Devices;
-            ApplyAssets(plc, losPlc);
+            var kept = KeptMoves(plc, losPlc);
+            var variables = LosVariables(plc, losPlc);
+            ApplyAssets(plc, losPlc, variables);
+            plc.VariableMoves = kept;
         }
         ApplyCatalog();
     }
 
-    private static void ApplyAssets(Plc plc, LosPlc losPlc)
+    private static void ApplyAssets(Plc plc, LosPlc losPlc, Dictionary<string, List<AssetVariable>> variables)
     {
         var inLos = losPlc.Assets.Select(a => a.Element).ToHashSet();
         var result = new List<Asset>();
         foreach (var asset in losPlc.Assets)
         {
+            asset.Variables = variables[asset.Element];
             var existing = plc.FindAsset(asset.Element);
             if (existing is null)
             {
