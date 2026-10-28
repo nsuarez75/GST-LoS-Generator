@@ -71,6 +71,8 @@ public partial class MainWindow : Window, IDialogs
 
     public Task<bool> Confirm(string title, string text, string accept) => DialogWindow.Confirm(this, title, text, accept);
 
+    public Task<bool> Choose(string title, string text, string first, string second) => DialogWindow.Choose(this, title, text, first, second);
+
     public Task<SaveChoice> AskSave() => DialogWindow.AskSave(this);
 
     public Task<(bool Accepted, bool Option)> Changes(string title, IReadOnlyList<string> changes, IReadOnlyList<string> warnings, string? option = null) =>

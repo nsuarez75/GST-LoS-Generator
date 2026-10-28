@@ -22,6 +22,12 @@ internal sealed class FakeDialogs : IDialogs
 
     public Task<bool> Confirm(string title, string text, string accept) => Task.FromResult(ConfirmAnswer);
 
+    // Respuestas a Choose, en orden; sin ninguna preparada, la primera opción.
+    public Queue<bool> Choices { get; } = new();
+
+    public Task<bool> Choose(string title, string text, string first, string second) =>
+        Task.FromResult(Choices.Count == 0 || Choices.Dequeue());
+
     public Task<SaveChoice> AskSave() => Task.FromResult(SaveChoice.Discard);
 
     public Task<(bool Accepted, bool Option)> Changes(string title, IReadOnlyList<string> changes, IReadOnlyList<string> warnings, string? option = null)

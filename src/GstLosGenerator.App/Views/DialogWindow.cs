@@ -1,4 +1,4 @@
-// Diálogos sencillos (mensaje, confirmar, guardar cambios, campos de texto y lista de cambios),
+// Diálogos sencillos (mensaje, confirmar, elegir entre dos, guardar cambios, campos de texto y lista de cambios),
 // montados en código porque todos tienen la misma forma: título, contenido y botones abajo a la derecha.
 using Avalonia;
 using Avalonia.Controls;
@@ -69,6 +69,16 @@ public sealed class DialogWindow : Window
         var dialog = new DialogWindow(title, new ScrollViewer { Content = Text(text), MaxHeight = 480 }, 520);
         dialog.AddButton(accept, () => { result = true; dialog.Close(); }, isDefault: true);
         dialog.AddButton(L.T("Cancelar"), dialog.Close, isCancel: true);
+        await dialog.ShowDialog(owner);
+        return result;
+    }
+
+    public static async Task<bool> Choose(Window owner, string title, string text, string first, string second)
+    {
+        var result = false;
+        var dialog = new DialogWindow(title, new ScrollViewer { Content = Text(text), MaxHeight = 480 }, 520);
+        dialog.AddButton(first, () => { result = true; dialog.Close(); }, isDefault: true);
+        dialog.AddButton(second, dialog.Close, isCancel: true);
         await dialog.ShowDialog(owner);
         return result;
     }

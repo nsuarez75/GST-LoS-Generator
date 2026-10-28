@@ -21,6 +21,15 @@ public static partial class L
         ["nuevas {0}"] = "added {0}",
         ["quitadas {0}"] = "removed {0}",
         ["cambiadas {0}"] = "changed {0}",
+        ["{0}: la LoS pone la variable {1} en {2}, pero la moviste a {3}."] = "{0}: the LoS puts variable {1} in {2}, but you moved it to {3}.",
+        ["Variable movida"] = "Moved variable",
+        ["¿La dejas en {0} o vuelve a {1}, como dice la LoS?"] = "Keep it in {0} or send it back to {1}, as the LoS says?",
+        ["Dejarla movida"] = "Keep it moved",
+        ["Como en la LoS"] = "As in the LoS",
+        ["{0} ya tiene una variable {1}; no se mueve."] = "{0} already has a variable {1}; it is not moved.",
+        ["El tipo {0} no tenía la variable {1}; se añade al catálogo. Revisa que su UDT la tenga en TIA."] = "Type {0} did not have variable {1}; it is added to the catalog. Check that its UDT has it in TIA.",
+        ["Mover variables"] = "Move variables",
+        ["Arrastra la variable a otro asset para moverla."] = "Drag the variable onto another asset to move it.",
 
         // ---- validaciones
         ["Dirección repetida en {0}: {1}"] = "Duplicate address in {0}: {1}",

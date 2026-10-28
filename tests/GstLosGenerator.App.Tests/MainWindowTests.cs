@@ -231,6 +231,99 @@ public sealed class MainWindowTests : IDisposable
         Assert.Equal(["110", "90"], operations.Operations.Select(o => o.Id));
     }
 
+    private static List<string> VariableNames(MainViewModel main, string element) =>
+        main.Session.Project.Plcs[0].FindAsset(element)!.Variables.Select(v => v.Name).ToList();
+
+    [AvaloniaFact]
+    public async Task Con_mayus_clic_se_seleccionan_varias_variables_y_se_arrastran_a_otro_asset()
+    {
+        var (window, main, _) = await Open();
+        main.SelectedNode = main.FindNode(NavKind.Assets, "PLC01");
+        Dispatcher.UIThread.RunJobs();
+        Point Grip(string name) => window.GetVisualDescendants().OfType<Border>()
+            .First(b => b.Classes.Contains("grip") && b.DataContext is VariableRowViewModel r && r.Name == name)
+            .TranslatePoint(new Point(4, 8), window)!.Value;
+
+        window.MouseDown(Grip("DoorOpen01"), MouseButton.Left);
+        window.MouseUp(Grip("DoorOpen01"), MouseButton.Left);
+        window.MouseDown(Grip("CellWorkingEvent"), MouseButton.Left, RawInputModifiers.Shift);
+        window.MouseUp(Grip("CellWorkingEvent"), MouseButton.Left, RawInputModifiers.Shift);
+        Dispatcher.UIThread.RunJobs();
+        var tree = window.GetVisualDescendants().OfType<TreeView>().Single(t => t.Name == "Tree");
+        Assert.Equal(2, tree.SelectedItems!.OfType<VariableRowViewModel>().Count());
+
+        var target = window.GetVisualDescendants().OfType<TextBlock>().First(t => t.Text == "LX9_01_1000FIX01_01_MOVEHR")
+            .TranslatePoint(new Point(20, 6), window)!.Value;
+        var start = Grip("CellWorkingEvent");
+        window.MouseDown(start, MouseButton.Left);
+        window.MouseMove(start + new Point(0, 12), RawInputModifiers.LeftMouseButton);
+        Dispatcher.UIThread.RunJobs();
+        window.MouseMove(target, RawInputModifiers.LeftMouseButton);
+        Dispatcher.UIThread.RunJobs();
+        window.MouseUp(target, MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(["ProductionStatus"], VariableNames(main, "LX9_01_CELL01"));
+        Assert.Contains("DoorOpen01", VariableNames(main, "LX9_01_1000FIX01_01_MOVEHR"));
+        Assert.Contains("CellWorkingEvent", VariableNames(main, "LX9_01_1000FIX01_01_MOVEHR"));
+        Shot(window, "03b-variables-movidas");
+    }
+
+    [AvaloniaFact]
+    public async Task Borrar_varias_variables_de_golpe_se_deshace_de_una_vez()
+    {
+        var (_, main, _) = await Open();
+        main.SelectedNode = main.FindNode(NavKind.Assets, "PLC01");
+        var assets = Assert.IsType<AssetsViewModel>(main.Editor);
+        var cell = assets.Roots[0];
+
+        assets.RemoveVariables(cell.Children.OfType<VariableRowViewModel>().Skip(1).ToList());
+        Assert.Equal(["ProductionStatus"], VariableNames(main, "LX9_01_CELL01"));
+        Assert.Single(cell.Children.OfType<VariableRowViewModel>());
+
+        main.UndoCommand.Execute(null);
+        Assert.Equal(["ProductionStatus", "DoorOpen01", "CellWorkingEvent"], VariableNames(main, "LX9_01_CELL01"));
+    }
+
+    [AvaloniaFact]
+    public async Task Mover_una_variable_que_el_destino_ya_tiene_avisa_y_no_la_mueve()
+    {
+        var (_, main, dialogs) = await Open();
+        main.SelectedNode = main.FindNode(NavKind.Assets, "PLC01");
+        var assets = Assert.IsType<AssetsViewModel>(main.Editor);
+        var cell = assets.Roots[0];
+        var operation = cell.Children.OfType<AssetNodeViewModel>().First();
+        main.Session.Project.Plcs[0].FindAsset(operation.Element)!.Variables.Add(new AssetVariable { Name = "DoorOpen01" });
+        var rows = cell.Children.OfType<VariableRowViewModel>().Where(r => r.Name is "DoorOpen01" or "CellWorkingEvent").ToList();
+
+        await assets.MoveVariables(rows, operation);
+
+        Assert.Equal(["ProductionStatus", "DoorOpen01"], VariableNames(main, "LX9_01_CELL01"));
+        Assert.Contains(dialogs.Messages, m => m.Contains("DoorOpen01"));
+        Assert.Contains(dialogs.Messages, m => m.Contains("CellWorkingEvent") && m.Contains("UDT"));
+    }
+
+    [AvaloniaFact]
+    public async Task Al_reimportar_la_LoS_se_pregunta_por_cada_variable_movida()
+    {
+        var (_, main, dialogs) = await Open();
+        main.SelectedNode = main.FindNode(NavKind.Assets, "PLC01");
+        var assets = Assert.IsType<AssetsViewModel>(main.Editor);
+        var cell = assets.Roots[0];
+        var operation = cell.Children.OfType<AssetNodeViewModel>().First();
+        await assets.MoveVariables(cell.Children.OfType<VariableRowViewModel>().Where(r => r.Name is "DoorOpen01" or "CellWorkingEvent").ToList(), operation);
+
+        var los = Path.Combine(_dir, "LX9.xlsx");
+        dialogs.Files.Enqueue(los);
+        dialogs.Choices.Enqueue(true);
+        dialogs.Choices.Enqueue(false);
+        await main.ImportLosCommand.ExecuteAsync(null);
+
+        Assert.Equal(["ProductionStatus", "CellWorkingEvent"], VariableNames(main, "LX9_01_CELL01"));
+        Assert.Contains("DoorOpen01", VariableNames(main, "LX9_01_1000FIX01_01_MOVEHR"));
+        Assert.Equal("DoorOpen01", Assert.Single(main.Session.Project.Plcs[0].VariableMoves).Name);
+    }
+
     [AvaloniaFact]
     public async Task El_comentario_de_una_operacion_cambia_su_titulo()
     {

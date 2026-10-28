@@ -309,6 +309,13 @@ public sealed partial class MainViewModel : ObservableObject
             return;
         }
         var plan = LosImportPlan.Create(Session.Project, Session.Catalog, data);
+        foreach (var moved in plan.MovedVariables)
+        {
+            moved.Keep = await Dialogs.Choose(L.T("Variable movida"),
+                moved.Text + "\n\n" + L.T("¿La dejas en {0} o vuelve a {1}, como dice la LoS?", moved.Move.To, moved.Move.From),
+                L.T("Dejarla movida"), L.T("Como en la LoS"));
+        }
+        plan.Refresh();
         if (!plan.HasChanges)
         {
             await Dialogs.Message(L.T("Importar LoS"), L.T("La LoS no trae cambios respecto al proyecto."));
