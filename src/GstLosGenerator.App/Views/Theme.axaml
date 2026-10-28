@@ -324,6 +324,19 @@
         <Setter Property="Background" Value="{DynamicResource App.AccentSoft}" />
     </Style>
 
+    <!-- Arrastrar y soltar: raya que marca dónde caería lo arrastrado y fila que lo recibiría -->
+    <Style Selector="Border.dropline">
+        <Setter Property="Height" Value="2" />
+        <Setter Property="CornerRadius" Value="1" />
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="Border.dropline.on">
+        <Setter Property="Background" Value="{DynamicResource App.Accent}" />
+    </Style>
+    <Style Selector="Grid.droptarget">
+        <Setter Property="Background" Value="{DynamicResource App.AccentSoft}" />
+    </Style>
+
     <!-- Tablas (locations, direcciones, variables): filas con separador y hover, selección suave -->
     <Style Selector="ListBox.table">
         <Setter Property="Padding" Value="0" />

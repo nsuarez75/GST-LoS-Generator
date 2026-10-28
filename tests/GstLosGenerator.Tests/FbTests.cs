@@ -511,6 +511,84 @@ public class FbTests
         Assert.Equal("", clean.FindOperation("110")!.Comment);
     }
 
+    // Dos operaciones más, 90 y 120, con la 110 del FB de ejemplo.
+    private static (Project Project, Catalog Catalog, Plc Plc) ThreeOperations()
+    {
+        var (project, catalog, plc) = Prepared();
+        plc.Operations.Add(new Operation { Id = "120", Locations = [new OperationLocation { Location = "1000+FIX02" }] });
+        plc.Operations.Add(new Operation { Id = "90", Locations = [new OperationLocation { Location = "1000+FIX01" }] });
+        return (project, catalog, plc);
+    }
+
+    private static List<string> OperationOrder(string xml) =>
+        FbDocument.Parse(xml).Segments.Where(s => s.Key?.StartsWith("op:", StringComparison.Ordinal) == true).Select(s => s.Key![3..]).ToList();
+
+    [Fact]
+    public void Sin_orden_propio_las_operaciones_van_por_numero()
+    {
+        var (_, catalog, plc) = ThreeOperations();
+
+        Assert.Equal(["90", "110", "120"], OperationOrder(Fresh(plc, catalog)));
+    }
+
+    [Fact]
+    public void Con_orden_propio_las_operaciones_van_en_el_orden_de_la_lista()
+    {
+        var (_, catalog, plc) = ThreeOperations();
+        plc.CustomOperationOrder = true;
+
+        Assert.Equal(["110", "120", "90"], OperationOrder(Fresh(plc, catalog)));
+    }
+
+    [Fact]
+    public void El_orden_propio_recoloca_las_operaciones_del_FB_actual_sin_mover_lo_demas()
+    {
+        var (_, catalog, plc) = ThreeOperations();
+        var doc = FbDocument.Parse(Fresh(plc, catalog));
+        // Segmento hecho a mano entre dos operaciones; se queda en su hueco.
+        var manual = new FbSegment(Segments.Empty("Segmento manual", doc.Cultures), null);
+        doc.Segments.Insert(doc.Segments.FindIndex(s => s.Key == SegmentKeys.Operation("110")), manual);
+        var current = doc.Write();
+        var before = Titles(current);
+        plc.Operations = [plc.FindOperation("120")!, plc.FindOperation("110")!, plc.FindOperation("90")!];
+        plc.CustomOperationOrder = true;
+
+        var xml = FbGenerator.Generate(plc, catalog, current, new GenerateOptions()).Xml;
+
+        Assert.Equal(["120", "110", "90"], OperationOrder(xml));
+        Assert.Equal(before.IndexOf("Segmento manual"), Titles(xml).IndexOf("Segmento manual"));
+        Assert.Equal(before.Count, Titles(xml).Count);
+    }
+
+    [Fact]
+    public void Leer_FB_toma_el_orden_de_las_operaciones_del_FB()
+    {
+        var (_, catalog, plc) = ThreeOperations();
+        plc.Operations = [plc.FindOperation("120")!, plc.FindOperation("90")!, plc.FindOperation("110")!];
+        plc.CustomOperationOrder = true;
+        var xml = Fresh(plc, catalog);
+        plc.CustomOperationOrder = false;
+
+        var sync = FbSyncPlan.Create(plc, catalog, xml);
+        Assert.Contains(L.T("Orden de las operaciones: {0}", "120, 90, 110"), sync.Changes);
+        sync.Apply();
+
+        Assert.True(plc.CustomOperationOrder);
+        Assert.Equal(["120", "90", "110"], plc.OrderedOperations().Select(o => o.Id));
+        Assert.DoesNotContain(FbSyncPlan.Create(plc, catalog, xml).Changes, c => c.StartsWith(L.T("Orden de las operaciones: {0}", ""), StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Leer_FB_con_las_operaciones_por_numero_no_cambia_el_orden()
+    {
+        var (_, catalog, plc) = ThreeOperations();
+        var xml = Fresh(plc, catalog);
+
+        var sync = FbSyncPlan.Create(plc, catalog, xml);
+
+        Assert.DoesNotContain(sync.Changes, c => c.StartsWith(L.T("Orden de las operaciones: {0}", ""), StringComparison.Ordinal));
+    }
+
     // ---------------------------------------------------------------- utilidades
 
     private static XElement Segment(string xml, string title) =>

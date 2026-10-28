@@ -68,6 +68,7 @@ public sealed class FbSyncPlan
                 }
             }
         }
+        CompareOrder();
         foreach (var call in _read.Calls)
         {
             CompareCall(call);
@@ -76,6 +77,27 @@ public sealed class FbSyncPlan
         {
             _plc.CurrentFb = _xml;
             _plc.CurrentFbFile = _file;
+        });
+    }
+
+    // Las operaciones toman el orden de sus segmentos en el FB; las que el FB no tiene van detrás.
+    private void CompareOrder()
+    {
+        var current = _plc.OrderedOperations().Select(o => o.Id).ToList();
+        var read = _read.Operations.Select(o => o.Id).ToList();
+        var added = read.Where(id => !current.Contains(id)).ToList();
+        var after = read.Concat(current.Where(id => !read.Contains(id))).ToList();
+        // Lo que quedaría sin tocar el orden: las nuevas detrás o, sin orden propio, todas por número.
+        var unchanged = _plc.CustomOperationOrder ? current.Concat(added).ToList() : [.. current.Concat(added).Order(OperationIdComparer.Instance)];
+        if (read.SequenceEqual(unchanged.Where(read.Contains)))
+        {
+            return;
+        }
+        Changes.Add(L.T("Orden de las operaciones: {0}", string.Join(", ", after)));
+        _actions.Add(() =>
+        {
+            _plc.Operations = [.. after.Select(id => _plc.FindOperation(id)!)];
+            _plc.CustomOperationOrder = !after.SequenceEqual(after.Order(OperationIdComparer.Instance));
         });
     }
 

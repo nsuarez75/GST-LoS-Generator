@@ -1,4 +1,7 @@
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.VisualTree;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
@@ -178,6 +181,67 @@ public sealed class MainWindowTests : IDisposable
         var assets = Assert.IsType<AssetsViewModel>(main.Editor);
         assets.Select("LX9_01_1000FIX01_01_MOVEHR_02_FIX");
         Assert.Equal("110", Assert.IsType<AssetNodeViewModel>(assets.Selected).Operation);
+    }
+
+    [AvaloniaFact]
+    public async Task Arrastrar_una_operacion_cambia_el_orden_y_se_puede_volver_al_de_numero()
+    {
+        var (_, main, _) = await Open();
+        var plc = main.Session.Project.Plcs[0];
+        plc.Operations.Add(new Operation { Id = "90" });
+        main.SelectedNode = main.FindNode(NavKind.Operations, "PLC01");
+        var operations = Assert.IsType<OperationsViewModel>(main.Editor);
+        Assert.Equal(["90", "110"], operations.Operations.Select(o => o.Id));
+
+        operations.Move(operations.Operations[1], 0);
+
+        Assert.Equal(["110", "90"], operations.Operations.Select(o => o.Id));
+        Assert.Equal(["110", "90"], plc.OrderedOperations().Select(o => o.Id));
+        Assert.True(operations.HasCustomOrder);
+
+        operations.SortByNumberCommand.Execute(null);
+        Assert.Equal(["90", "110"], operations.Operations.Select(o => o.Id));
+        Assert.False(main.Session.Project.Plcs[0].CustomOperationOrder);
+
+        main.UndoCommand.Execute(null);
+        Assert.Equal(["110", "90"], main.Session.Project.Plcs[0].OrderedOperations().Select(o => o.Id));
+    }
+
+    [AvaloniaFact]
+    public async Task Arrastrar_con_el_raton_una_operacion_la_lleva_a_otra_posicion()
+    {
+        var (window, main, _) = await Open();
+        main.Session.Project.Plcs[0].Operations.Add(new Operation { Id = "90" });
+        main.SelectedNode = main.FindNode(NavKind.Operations, "PLC01");
+        Dispatcher.UIThread.RunJobs();
+        var operations = Assert.IsType<OperationsViewModel>(main.Editor);
+        var items = window.GetVisualDescendants().OfType<ListBoxItem>().Where(i => i.DataContext is OperationViewModel).ToList();
+        Point Top(ListBoxItem item) => item.TranslatePoint(new Point(40, 6), window)!.Value;
+
+        // La 110 (segunda) se suelta en la mitad de arriba de la 90 (primera).
+        var start = Top(items[1]);
+        window.MouseDown(start, MouseButton.Left);
+        window.MouseMove(start + new Point(0, -10), RawInputModifiers.LeftMouseButton);
+        Dispatcher.UIThread.RunJobs();
+        window.MouseMove(Top(items[0]), RawInputModifiers.LeftMouseButton);
+        Dispatcher.UIThread.RunJobs();
+        window.MouseUp(Top(items[0]), MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(["110", "90"], operations.Operations.Select(o => o.Id));
+    }
+
+    [AvaloniaFact]
+    public async Task El_comentario_de_una_operacion_cambia_su_titulo()
+    {
+        var (_, main, _) = await Open();
+        main.SelectedNode = main.FindNode(NavKind.Operations, "PLC01");
+        var operation = Assert.IsType<OperationsViewModel>(main.Editor).Selected!;
+
+        operation.Comment = "  Carga de piezas ";
+
+        Assert.Equal("Operation 110: Carga de piezas", operation.Title);
+        Assert.Equal("Carga de piezas", main.Session.Project.Plcs[0].Operations[0].Comment);
     }
 
     [AvaloniaFact]

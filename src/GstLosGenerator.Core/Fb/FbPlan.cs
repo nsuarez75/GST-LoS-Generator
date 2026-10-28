@@ -86,7 +86,7 @@ public sealed class FbPlan
         {
             Static.Add(new(call.Instance, $"\"{call.Fb}\"", false, call.Element));
         }
-        Operations.AddRange(Plc.Operations);
+        Operations.AddRange(Plc.OrderedOperations());
         foreach (var operation in Operations)
         {
             Static.Add(new(operation.VariableName, $"\"{Naming.OperationUdt}\"", true, null));

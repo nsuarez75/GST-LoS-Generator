@@ -52,6 +52,10 @@ public static class FbGenerator
 
         var generated = BuildSegments(plan, cultures);
         MergeSegments(document, generated, plan, options, fresh, result);
+        if (!fresh && plc.CustomOperationOrder)
+        {
+            ReorderOperations(document, plan);
+        }
         MergeStatic(document, plan, options, fresh);
         EnsureTemp(document, Segments.LifeBitVariable, "Bool");
 
@@ -74,7 +78,7 @@ public static class FbGenerator
             (SegmentKeys.Config, Segments.Empty(Segments.ConfigTitle, cultures), null),
             (SegmentKeys.OperationsHeader, Segments.Empty(Segments.OperationsHeaderTitle, cultures), null),
         };
-        foreach (var operation in plan.Operations.OrderBy(o => o.Id, OperationIdComparer.Instance))
+        foreach (var operation in plan.Operations)
         {
             list.Add((SegmentKeys.Operation(operation.Id), Segments.Operation(operation, plan.Plc, cultures), null));
         }
@@ -144,6 +148,20 @@ public static class FbGenerator
             {
                 existing.Unit = unit;
             }
+        }
+    }
+
+    // Orden elegido a mano: los segmentos de operaciones se recolocan entre los huecos que ya ocupan,
+    // sin mover los demás segmentos.
+    private static void ReorderOperations(FbDocument document, FbPlan plan)
+    {
+        var order = plan.Operations.Select((o, i) => (Key: SegmentKeys.Operation(o.Id), i)).ToDictionary(p => p.Key, p => p.i);
+        var slots = document.Segments.Select((s, i) => (Segment: s, Index: i))
+            .Where(p => p.Segment.Key is { } key && order.ContainsKey(key)).ToList();
+        var sorted = slots.Select(p => p.Segment).OrderBy(s => order[s.Key!]).ToList();
+        for (var i = 0; i < slots.Count; i++)
+        {
+            document.Segments[slots[i].Index] = sorted[i];
         }
     }
 
