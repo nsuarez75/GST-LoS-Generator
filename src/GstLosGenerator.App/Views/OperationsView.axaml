@@ -55,12 +55,17 @@
                 <DataTemplate x:DataType="vm:OperationViewModel">
                     <DockPanel>
                         <Border DockPanel.Dock="Top" Classes="toolbar">
-                            <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <TextBlock Classes="label" Text="{l:T 'Número'}" Margin="0,0,10,0" />
-                                <TextBox Text="{Binding Id, UpdateSourceTrigger=LostFocus}" Width="100" Margin="0,0,14,0" />
-                                <TextBlock Classes="label" Text="{l:T 'Comentario'}" Margin="0,0,10,0" />
-                                <TextBox Text="{Binding Comment, UpdateSourceTrigger=LostFocus}" Width="260" Margin="0,0,14,0"
-                                         PlaceholderText="{l:T 'vacío: el título lleva las locations'}" />
+                            <!-- Cada etiqueta va con su caja; en ventanas estrechas bajan de línea juntas, con aire entre líneas -->
+                            <WrapPanel Orientation="Horizontal" VerticalAlignment="Center" ItemSpacing="18" LineSpacing="10">
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <TextBlock Classes="label" Text="{l:T 'Número'}" VerticalAlignment="Center" />
+                                    <TextBox Text="{Binding Id, UpdateSourceTrigger=LostFocus}" Width="100" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <TextBlock Classes="label" Text="{l:T 'Comentario'}" VerticalAlignment="Center" />
+                                    <TextBox Text="{Binding Comment, UpdateSourceTrigger=LostFocus}" Width="260"
+                                             PlaceholderText="{l:T 'vacío: el título lleva las locations'}" />
+                                </StackPanel>
                                 <TextBlock Text="{Binding Title}" Classes="h2" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                             </WrapPanel>
                         </Border>
