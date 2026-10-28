@@ -86,9 +86,21 @@ public sealed partial class GenerateViewModel : ObservableObject
         {
             try
             {
-                foreach (var segment in FbDocument.Parse(xml).Segments.Where(s => s.Key?.StartsWith("call:", StringComparison.Ordinal) == true))
+                var document = FbDocument.Parse(xml);
+                foreach (var segment in document.Segments.Where(s => s.Key?.StartsWith("call:", StringComparison.Ordinal) == true))
                 {
                     inFb.Add(segment.Key!["call:".Length..]);
+                }
+                // Un asset sin FB no tiene llamada: está en el FB si Struct TO DEVICE ya escribe todas sus líneas.
+                if (document.Find(SegmentKeys.Struct) is { } structSegment && FbXml.Source(structSegment.Unit) is { } scl)
+                {
+                    foreach (var (element, writes) in FbPlan.Create(Plc, _host.Session.Catalog).DirectWrites)
+                    {
+                        if (writes.All(w => RegionMerge.Writes(scl.Elements(), w)))
+                        {
+                            inFb.Add(element);
+                        }
+                    }
                 }
             }
             catch (FbFormatException e)

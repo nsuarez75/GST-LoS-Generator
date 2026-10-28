@@ -110,7 +110,17 @@ public static class FbGenerator
                 continue;
             }
             previous = existing;
-            if (fresh || !ShouldRewrite(key, asset, options))
+            if (fresh)
+            {
+                continue;
+            }
+            if (key == SegmentKeys.Struct)
+            {
+                // Las regiones y líneas que faltan se añaden siempre; sin la parte marcada no se reescribe nada.
+                RegionMerge.Update(existing.Unit, unit, plan, options.Parts.HasFlag(FbParts.Struct) ? options.Assets : []);
+                continue;
+            }
+            if (!ShouldRewrite(key, asset, options))
             {
                 continue;
             }
@@ -124,10 +134,6 @@ public static class FbGenerator
                     result.Warnings.Add(L.T("{0}: el FB {1} no tiene los pines {2}, conectados a mano; no se regenera hasta que lo confirmes.",
                         loss.Element, loss.Fb, string.Join(", ", loss.Pins)));
                 }
-            }
-            else if (key == SegmentKeys.Struct)
-            {
-                RegionMerge.Update(existing.Unit, unit, plan, options.Assets);
             }
             else
             {
@@ -149,7 +155,6 @@ public static class FbGenerator
         }
         return key switch
         {
-            SegmentKeys.Struct => parts.HasFlag(FbParts.Struct),
             SegmentKeys.SwapFloat or SegmentKeys.Swap => parts.HasFlag(FbParts.Swaps),
             _ => false,
         };

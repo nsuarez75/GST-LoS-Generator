@@ -32,7 +32,7 @@ public static class RegionMerge
             }
             else if (region.Children.Count == 0)
             {
-                output.Add(Selected(region.Name) ? Render(region, 0) : block);
+                output.Add(Selected(region.Name) ? Render(region, 0) : Complete(block, region, 0));
             }
             else
             {
@@ -79,7 +79,7 @@ public static class RegionMerge
         {
             if (child.Name is not null && generatedChildren.TryGetValue(child.Name, out var g))
             {
-                merged.Add(selected(g.Name) ? Render(g, 1) : child);
+                merged.Add(selected(g.Name) ? Render(g, 1) : Complete(child, g, 1));
             }
             else if (child.Name is not null || child.Items.Any(e => !IsSpace(e)))
             {
@@ -110,6 +110,42 @@ public static class RegionMerge
         }
         result.Add(Token("END_REGION"));
         return new Block(region.Name, result);
+    }
+
+    // Región sin marcar: se conserva tal cual y solo se añaden, delante de su END_REGION,
+    // las líneas de la app cuyo destino no aparece en ella (ni escrito ni comentado).
+    private static Block Complete(Block old, SclRegion region, int depth)
+    {
+        var missing = region.Assignments.Where(a => !Writes(old.Items, a)).ToList();
+        if (missing.Count == 0)
+        {
+            return old;
+        }
+        var writer = new SclWriter();
+        writer.Assignments(missing, depth + 1);
+        var items = old.Items.ToList();
+        var end = items.FindLastIndex(e => IsToken(e, "END_REGION"));
+        var at = end > 0 && items[end - 1].Name == Ns + "Blank" ? end - 1 : end;
+        items.InsertRange(at, writer.Root.Elements());
+        return new Block(old.Name, items);
+    }
+
+    // Si el SCL ya escribe el miembro del device: una asignación a #Device.Miembro o un comentario que lo nombra.
+    public static bool Writes(IEnumerable<XElement> items, DeviceAssignment assignment)
+    {
+        foreach (var e in items.SelectMany(i => i.DescendantsAndSelf()))
+        {
+            if (e.Name == Ns + "Access"
+                && e.Descendants(Ns + "Component").Select(c => (string?)c.Attribute("Name")).SequenceEqual([assignment.Device, assignment.Member]))
+            {
+                return true;
+            }
+            if (e.Name.LocalName is "LineComment" or "Comment" && e.Value.Contains(assignment.Member, StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     // Región generada como lista de elementos, sin la sangría inicial ni el salto final.
