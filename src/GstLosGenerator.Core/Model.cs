@@ -94,6 +94,8 @@ public sealed class AssetVariable
     // Dirección tal como la escribe la LoS: Bool_061_o(000)_00.
     public string Address { get; set; } = "";
     public string Description { get; set; } = "";
+    // Desactivada: en Struct TO DEVICE se escribe comentada.
+    public bool Disabled { get; set; }
 
     [JsonIgnore]
     public bool IsOutput => Direction.Equals("OUT", StringComparison.OrdinalIgnoreCase);

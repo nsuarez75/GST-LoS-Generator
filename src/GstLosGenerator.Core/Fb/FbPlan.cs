@@ -187,7 +187,7 @@ public sealed class FbPlan
                 continue;
             }
             var member = device.Addresses.FirstOrDefault(a => a.SheetName == variable.Address || a.Name == variable.Address)?.Name ?? variable.Address;
-            list.Add(new DeviceAssignment(Plc.DeviceName(device.Number), member, path));
+            list.Add(new DeviceAssignment(Plc.DeviceName(device.Number), member, path, variable.Disabled));
         }
         return list;
     }

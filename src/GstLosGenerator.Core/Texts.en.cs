@@ -237,6 +237,8 @@ public static partial class L
         ["Ninguno: se genera desde cero con todos los segmentos."] = "None: generated from scratch with all networks.",
         ["El FB actual guardado no se puede leer: {0}"] = "The stored current FB cannot be read: {0}",
         ["nuevo: se añade"] = "new: it is added",
+        ["Sin marcar, la señal está desactivada: en Struct TO DEVICE se escribe comentada."]
+            = "Unchecked, the signal is disabled: it is written commented out in Struct TO DEVICE.",
         ["Assets que se reescriben"] = "Assets to rewrite",
         ["Todos"] = "All",
         ["Ninguno"] = "None",

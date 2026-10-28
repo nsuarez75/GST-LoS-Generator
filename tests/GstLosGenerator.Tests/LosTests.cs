@@ -80,6 +80,7 @@ public class LosTests
         plc.FindAsset("LX9_01_1000FIX01_01_MOVEHR")!.Operation = "110";
         plc.FindAsset("LX9_01_1000FIX01_01_MOVEHR_01_R")!.Type = "AS_ROBOT_B";
         plc.Assets.Add(new Asset { Element = "LX9_01_EXTRA", Type = "AS_ROBOT", Manual = true });
+        plc.FindAsset("LX9_01_1000FIX01_01_MOVEHR_01_R")!.Variables.First(v => v.Name == "Job").Disabled = true;
 
         var signals = FakeLos.DefaultSignals();
         signals.RemoveAll(s => s.Element == "LX9_01_1000FIX01_01_MOVEHR_02_FIX");
@@ -100,6 +101,9 @@ public class LosTests
         Assert.False(plc.FindAsset("LX9_01_EXTRA")!.Missing);
         Assert.Single(plc.Operations);
         Assert.Contains(catalog.Find("AS_ROBOT")!.Variables, v => v.Name == "Speed");
+        var robot = plc.FindAsset("LX9_01_1000FIX01_01_MOVEHR_01_R")!.Variables;
+        Assert.True(robot.First(v => v.Name == "Job").Disabled);
+        Assert.False(robot.First(v => v.Name == "Speed").Disabled);
     }
 
     [Fact]

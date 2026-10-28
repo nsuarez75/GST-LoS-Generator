@@ -299,6 +299,13 @@ public sealed partial class VariableRowViewModel(Session session, AssetNodeViewM
 
     public static IReadOnlyList<string> Directions { get; } = ["OUT", "IN"];
 
+    // Sin marcar: en Struct TO DEVICE se escribe comentada.
+    public bool Enabled
+    {
+        get => !Variable.Disabled;
+        set => Edit(!Variable.Disabled, value, v => Variable.Disabled = !v);
+    }
+
     public string Name
     {
         get => Variable.Name;
