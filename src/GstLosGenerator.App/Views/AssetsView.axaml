@@ -27,6 +27,10 @@
         <Style Selector="v|AssetsView.narrow :is(Control).colState">
             <Setter Property="Width" Value="150" />
         </Style>
+        <!-- Variable desactivada: la fila atenuada, salvo su casilla -->
+        <Style Selector="Grid.off > :is(Control):not(CheckBox)">
+            <Setter Property="Opacity" Value="0.45" />
+        </Style>
     </UserControl.Styles>
 
     <DockPanel Margin="24,20,24,16">
@@ -105,7 +109,9 @@
                             </Grid>
                         </TreeDataTemplate>
                         <DataTemplate DataType="vm:VariableRowViewModel">
-                            <Grid ColumnDefinitions="22,*,Auto,Auto,Auto" Height="30">
+                            <Grid ColumnDefinitions="22,*,Auto,Auto,Auto" Height="30" Classes.off="{Binding !Enabled}">
+                                <CheckBox IsChecked="{Binding Enabled}" MinWidth="0" Padding="0" VerticalAlignment="Center"
+                                          ToolTip.Tip="{l:T 'Sin marcar, la señal está desactivada: en Struct TO DEVICE se escribe comentada.'}" />
                                 <TextBox Classes="cell" Grid.Column="1" Text="{Binding Name, UpdateSourceTrigger=LostFocus}" Margin="0,0,8,0" ToolTip.Tip="{Binding Description}" />
                                 <TextBox Classes="cell colType" Grid.Column="2" Text="{Binding DataType, UpdateSourceTrigger=LostFocus}" Margin="0,0,8,0" />
                                 <ComboBox Grid.Column="3" Classes="colOp" ItemsSource="{x:Static vm:VariableRowViewModel.Directions}" SelectedItem="{Binding Direction}" Margin="0,0,8,0" />

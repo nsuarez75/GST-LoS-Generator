@@ -216,6 +216,11 @@ public sealed class LosImportPlan
             existing.LosType = asset.Type;
             existing.Kind = asset.Kind;
             existing.LayoutName = asset.LayoutName;
+            // Las variables desactivadas siguen desactivadas si la LoS las conserva.
+            foreach (var variable in asset.Variables)
+            {
+                variable.Disabled = existing.Variables.Any(v => v.Name == variable.Name && v.Disabled);
+            }
             existing.Variables = asset.Variables;
             existing.Manual = false;
             existing.Missing = false;

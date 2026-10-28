@@ -19,7 +19,8 @@ public sealed record CallInfo(
 }
 
 // Asignación de Struct TO DEVICE: #Device_61."Bool_061_o(000)_00" := #LX9_01_CELL01.ProductionStatus;
-public sealed record DeviceAssignment(string Device, string Member, SclPath Source);
+// Disabled: la línea se escribe comentada.
+public sealed record DeviceAssignment(string Device, string Member, SclPath Source, bool Disabled = false);
 
 // Variable de SCL: #a.b es local; "DB".a.b o Tag, global. Las comillas no forman parte del nombre.
 public sealed record SclPath(bool Global, IReadOnlyList<string> Components)
@@ -72,6 +73,16 @@ public sealed record SclPath(bool Global, IReadOnlyList<string> Components)
             i++;
         }
     }
+
+    // Como lo escribe TIA: #a."b c" o "DB".a; entre comillas lo que no es un identificador y el bloque global.
+    public string Text()
+    {
+        var parts = Components.Select((c, i) => (Global && i == 0) || !IsIdentifier(c) ? $"\"{c}\"" : c);
+        return (Global ? "" : "#") + string.Join('.', parts);
+    }
+
+    private static bool IsIdentifier(string name) =>
+        name.Length > 0 && !char.IsDigit(name[0]) && name.All(c => char.IsLetterOrDigit(c) || c == '_');
 }
 
 // Región de Struct TO DEVICE; las de celda llevan sub-regiones.
@@ -443,12 +454,19 @@ public sealed class SclWriter
         Token("END_REGION").NewLine(depth == 0 ? 2 : 1);
     }
 
-    // #Device."Miembro" := origen; una por línea.
+    // #Device."Miembro" := origen; una por línea. Las desactivadas van comentadas con //.
     public void Assignments(IEnumerable<DeviceAssignment> assignments, int depth)
     {
         foreach (var a in assignments)
         {
             Indent(depth);
+            if (a.Disabled)
+            {
+                var text = $" {SclPath.Local(a.Device, a.Member).Text()} := {a.Source.Text()};";
+                Add(new XElement(Ns + "LineComment", new XAttribute("Inserted", "false"), new XAttribute("NoClosingBracket", "false"), Id(),
+                    new XElement(Ns + "Text", Id(), text))).NewLine();
+                continue;
+            }
             Add(Local(a.Device, a.Member)).Blank().Token(":=").Blank().Add(Access(a.Source)).Token(";").NewLine();
         }
     }

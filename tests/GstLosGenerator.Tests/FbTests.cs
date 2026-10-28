@@ -220,6 +220,34 @@ public class FbTests
         }
     }
 
+    [Fact]
+    public void Una_senal_desactivada_se_escribe_comentada_y_no_se_vuelve_a_anadir()
+    {
+        var (_, catalog, plc) = Prepared();
+        var robot = plc.FindAsset("LX9_01_1000FIX01_01_MOVEHR_01_R")!;
+        robot.Variables.First(v => v.Name == "Job").Disabled = true;
+        var line = "#Device_11.\"Int16_011_o(002)\" := #LX9_01_1000FIX01_01_MOVEHR_01_R.Job;";
+
+        var xml = Fresh(plc, catalog);
+        var scl = Scl(xml, Segments.StructTitle);
+        Assert.Contains("// " + line, scl);
+        Assert.DoesNotContain(scl.Split('\n'), l => l.Trim() == line);
+
+        // Al regenerar con o sin marcar el asset, sigue comentada y no se repite.
+        foreach (var assets in new HashSet<string>[] { [], [robot.Element] })
+        {
+            var again = Scl(FbGenerator.Generate(plc, catalog, xml, new GenerateOptions { Parts = FbParts.Struct, Assets = assets }).Xml, Segments.StructTitle);
+            Assert.Single(again.Split('\n'), l => l.Contains(line));
+            Assert.Contains("// " + line, again);
+        }
+    }
+
+    [Theory]
+    [InlineData("#LifeBit", "#LifeBit")]
+    [InlineData("#Device_11.\"Bool_011_o(000)_04\"", "#Device_11.\"Bool_011_o(000)_04\"")]
+    [InlineData("Info_DB.stat.\"Firma 1\"", "\"Info_DB\".stat.\"Firma 1\"")]
+    public void Una_ruta_SCL_se_escribe_como_en_TIA(string text, string expected) => Assert.Equal(expected, SclPath.Parse(text)!.Text());
+
     [Theory]
     [InlineData("#LifeBit", false, new[] { "LifeBit" })]
     [InlineData("#Device_11.\"Bool_011_o(000)_04\"", false, new[] { "Device_11", "Bool_011_o(000)_04" })]
@@ -474,6 +502,7 @@ public class FbTests
                         sb.Append(System.Text.RegularExpressions.Regex.IsMatch(name, @"^[A-Za-z_]\w*$") ? name : $"\"{name}\"");
                         break;
                     case "Access" when (string?)c.Attribute("Scope") == "LocalVariable": sb.Append('#'); Walk(c); break;
+                    case "LineComment": sb.Append("//"); Walk(c); break;
                     case "Instruction": sb.Append((string)c.Attribute("Name")!); Walk(c); break;
                     case "TemplateValue": sb.Append('<').Append(c.Value).Append('>'); break;
                     default: Walk(c); break;

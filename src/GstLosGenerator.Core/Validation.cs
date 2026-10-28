@@ -51,7 +51,7 @@ public static class Validation
             }
         }
         var used = plc.Assets.Where(a => !a.Missing)
-            .SelectMany(a => a.Variables.Where(v => v.IsOutput && v.Address.Length > 0).Select(v => (Asset: a.Element, v.Address)))
+            .SelectMany(a => a.Variables.Where(v => v.IsOutput && !v.Disabled && v.Address.Length > 0).Select(v => (Asset: a.Element, v.Address)))
             .GroupBy(x => x.Address)
             .Where(g => g.Count() > 1);
         foreach (var group in used)
