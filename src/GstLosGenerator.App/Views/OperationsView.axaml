@@ -51,6 +51,9 @@
                             <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
                                 <TextBlock Classes="label" Text="{l:T 'Número'}" Margin="0,0,10,0" />
                                 <TextBox Text="{Binding Id, UpdateSourceTrigger=LostFocus}" Width="100" Margin="0,0,14,0" />
+                                <TextBlock Classes="label" Text="{l:T 'Comentario'}" Margin="0,0,10,0" />
+                                <TextBox Text="{Binding Comment, UpdateSourceTrigger=LostFocus}" Width="260" Margin="0,0,14,0"
+                                         PlaceholderText="{l:T 'vacío: el título lleva las locations'}" />
                                 <TextBlock Text="{Binding Title}" Classes="h2" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                             </WrapPanel>
                         </Border>

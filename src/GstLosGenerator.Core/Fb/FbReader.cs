@@ -21,7 +21,8 @@ public static class FbReader
     private static readonly XNamespace Stl = FbXml.Stl;
     private static readonly XNamespace Lad = FbXml.FlgNet;
 
-    public static FbReadResult Read(string xml)
+    // known: locations del PLC, para poner nombre a las de una operación cuyo título lleva comentario.
+    public static FbReadResult Read(string xml, IReadOnlyList<Location>? known = null)
     {
         var document = FbDocument.Parse(xml);
         var result = new FbReadResult();
@@ -31,7 +32,7 @@ public static class FbReader
         {
             if (segment.Key?.StartsWith("op:", StringComparison.Ordinal) == true)
             {
-                ReadOperation(segment, result);
+                ReadOperation(segment, result, known ?? []);
             }
             else if (segment.Key?.StartsWith("call:", StringComparison.Ordinal) == true)
             {
@@ -44,13 +45,11 @@ public static class FbReader
         return result;
     }
 
-    private static void ReadOperation(FbSegment segment, FbReadResult result)
+    private static void ReadOperation(FbSegment segment, FbReadResult result, IReadOnlyList<Location> known)
     {
         var id = FbDocument.OperationOf(segment.Unit)!;
         var operation = new Operation { Id = id };
-        var title = segment.Title;
-        var colon = title.IndexOf(':');
-        var names = colon < 0 ? [] : title[(colon + 1)..].Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        var numbers = new List<int>();
 
         long? loaded = null;
         var condition = new List<string>();
@@ -77,7 +76,7 @@ public static class FbReader
                     }
                     break;
                 case "T":
-                    Store(operation, Path(access), loaded, names, result);
+                    Store(operation, Path(access), loaded, numbers);
                     break;
                 case "Assign":
                     Assign(operation, Path(access), condition);
@@ -85,7 +84,37 @@ public static class FbReader
                     break;
             }
         }
+        NameLocations(operation, segment.Title, numbers, known, result);
         result.Operations.Add(operation);
+    }
+
+    // El título «Operation 110 :LOC1, LOC2» da los nombres de las locations. Si lleva comentario
+    // («Operation 110: texto») o los nombres no cuadran, se buscan por número entre las del PLC.
+    private static void NameLocations(Operation operation, string title, List<int> numbers, IReadOnlyList<Location> known, FbReadResult result)
+    {
+        var colon = title.IndexOf(':');
+        var tail = colon < 0 ? "" : title[(colon + 1)..].Trim();
+        var commentForm = colon > 0 && title[colon - 1] != ' ';
+        var names = tail.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        var fromTitle = !commentForm && names.Length == operation.Locations.Count;
+        for (var i = 0; i < operation.Locations.Count; i++)
+        {
+            if (i >= numbers.Count || numbers[i] == 0)
+            {
+                continue;
+            }
+            var number = numbers[i];
+            var name = fromTitle ? names[i] : known.FirstOrDefault(l => l.Number == number)?.Name ?? "Loc" + number;
+            operation.Locations[i].Location = name;
+            if (!result.Locations.Any(l => l.Name == name))
+            {
+                result.Locations.Add(new ReadLocation(name, number));
+            }
+        }
+        if (!fromTitle && tail != string.Join(", ", operation.Locations.Select(l => l.Location)))
+        {
+            operation.Comment = tail;
+        }
     }
 
     // Componentes del destino: Operation_110.Location[1].PartPresent_ref[2] -> [(Operation_110,null),(Location,1),(PartPresent_ref,2)].
@@ -103,7 +132,7 @@ public static class FbReader
         return operation.Locations[index - 1];
     }
 
-    private static void Store(Operation operation, List<(string Name, int? Index)> path, long? value, string[] names, FbReadResult result)
+    private static void Store(Operation operation, List<(string Name, int? Index)> path, long? value, List<int> numbers)
     {
         if (value is null || path.Count < 2)
         {
@@ -120,13 +149,11 @@ public static class FbReader
         var location = LocationAt(operation, index);
         if (field == "Loc")
         {
-            var number = (int)value.Value;
-            var name = index <= names.Length ? names[index - 1] : "Loc" + number;
-            location.Location = name;
-            if (!result.Locations.Any(l => l.Name == name))
+            while (numbers.Count < index)
             {
-                result.Locations.Add(new ReadLocation(name, number));
+                numbers.Add(0);
             }
+            numbers[index - 1] = (int)value.Value;
         }
         else if (field == "Mask")
         {

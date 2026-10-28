@@ -25,7 +25,7 @@ public sealed class FbSyncPlan
 
     public static FbSyncPlan Create(Plc plc, Catalog catalog, string xml, string? file = null)
     {
-        var plan = new FbSyncPlan(plc, catalog, FbReader.Read(xml), xml, file);
+        var plan = new FbSyncPlan(plc, catalog, FbReader.Read(xml, plc.Locations), xml, file);
         plan.Compute();
         return plan;
     }
@@ -54,10 +54,18 @@ public sealed class FbSyncPlan
                 Changes.Add(L.T("Operación nueva: {0}", operation.Id));
                 _actions.Add(() => _plc.Operations.Add(operation));
             }
-            else if (Storage.ToJson(existing) != Storage.ToJson(operation))
+            else
             {
-                Changes.Add(L.T("Operación {0}: locations, referencias o señales distintas", operation.Id));
-                _actions.Add(() => existing.Locations = operation.Locations);
+                if (Storage.ToJson(existing.Locations) != Storage.ToJson(operation.Locations))
+                {
+                    Changes.Add(L.T("Operación {0}: locations, referencias o señales distintas", operation.Id));
+                    _actions.Add(() => existing.Locations = operation.Locations);
+                }
+                if (existing.Comment.Trim() != operation.Comment)
+                {
+                    Changes.Add(L.T("Operación {0}: comentario «{1}» → «{2}»", operation.Id, existing.Comment.Trim(), operation.Comment));
+                    _actions.Add(() => existing.Comment = operation.Comment);
+                }
             }
         }
         foreach (var call in _read.Calls)

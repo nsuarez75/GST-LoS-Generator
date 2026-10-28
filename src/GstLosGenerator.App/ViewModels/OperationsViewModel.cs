@@ -126,6 +126,19 @@ public sealed partial class OperationViewModel : EditableViewModel
         }
     }
 
+    // Vacío: el título del segmento lleva las locations; si no, «Operation 110: comentario».
+    public string Comment
+    {
+        get => Operation.Comment;
+        set
+        {
+            if (Edit(Operation.Comment, value.Trim(), v => Operation.Comment = v))
+            {
+                TitleChanged();
+            }
+        }
+    }
+
     public string Title => Segments.OperationTitle(Operation);
     public string Summary => L.T("{0} locations · {1} assets", Operation.Locations.Count, Plc.Assets.Count(a => a.Operation == Operation.Id));
 

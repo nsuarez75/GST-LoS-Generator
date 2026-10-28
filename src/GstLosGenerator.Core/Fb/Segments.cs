@@ -108,8 +108,11 @@ public static class Segments
     public static XElement Empty(string title, IReadOnlyList<string> cultures) =>
         FbXml.CompileUnit(FbXml.Lad, null, title, cultures);
 
+    // «Operation 110 :LOC1, LOC2» o, con comentario, «Operation 110: comentario».
     public static string OperationTitle(Operation operation) =>
-        $"Operation {operation.Id} :{string.Join(", ", operation.Locations.Select(l => l.Location))}";
+        operation.Comment.Trim() is { Length: > 0 } comment
+            ? $"Operation {operation.Id}: {comment}"
+            : $"Operation {operation.Id} :{string.Join(", ", operation.Locations.Select(l => l.Location))}";
 
     // Segmento STL de configuración de una operación, como los del FB de ejemplo.
     public static XElement Operation(Operation operation, Plc plc, IReadOnlyList<string> cultures)

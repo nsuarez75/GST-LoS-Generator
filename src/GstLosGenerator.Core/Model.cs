@@ -111,6 +111,8 @@ public sealed class Operation
 {
     // Número de la operación (110) o el texto que se le quiera dar (DMC).
     public string Id { get; set; } = "";
+    // Texto del título del segmento; vacío: el título lleva los nombres de sus locations.
+    public string Comment { get; set; } = "";
     public List<OperationLocation> Locations { get; set; } = [];
 
     [JsonIgnore]
