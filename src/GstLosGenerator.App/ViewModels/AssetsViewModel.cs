@@ -28,10 +28,43 @@ public sealed partial class AssetsViewModel : EditableViewModel, ISelectable
     {
         Plc = plc;
         _dialogs = dialogs;
+        if (!session.AssetsViews.TryGetValue(plc.Name, out var memory))
+        {
+            session.AssetsViews[plc.Name] = memory = new AssetsViewMemory();
+        }
+        _memory = memory;
         TypeNames = Session.Catalog.Types.Select(t => t.Name).Concat(plc.Assets.Select(a => a.Type))
             .Where(n => n.Length > 0).Distinct().Order(StringComparer.Ordinal).ToList();
         OperationChoices = [NoOperation, .. plc.Operations.Select(o => o.Id).Order(Core.Fb.OperationIdComparer.Instance)];
         Build();
+        if (_memory.Selected is { } selected)
+        {
+            Selected = Roots.Select(r => Find(r, selected, expand: false)).FirstOrDefault(n => n is not null);
+        }
+    }
+
+    private readonly AssetsViewMemory _memory;
+
+    // Al plegar o desplegar a mano; lo que abre el buscador no cuenta.
+    internal void Remember(Asset asset, bool expanded)
+    {
+        if (Search.Trim().Length == 0)
+        {
+            _memory.Expanded[asset.Element] = expanded;
+        }
+    }
+
+    partial void OnSelectedChanged(object? value)
+    {
+        if (value is not null)
+        {
+            _memory.Selected = value switch
+            {
+                AssetNodeViewModel a => a.Element,
+                VariableRowViewModel v => v.Owner.Element,
+                _ => null,
+            };
+        }
     }
 
     public string Summary => L.T("{0} assets", Plc.Assets.Count);
@@ -73,7 +106,8 @@ public sealed partial class AssetsViewModel : EditableViewModel, ISelectable
         {
             node.Children.Add(child);
         }
-        node.IsExpanded = filter.Length > 0 ? children.Count > 0 : asset.Kind == AssetKind.Cell;
+        node.IsExpanded = filter.Length > 0 ? children.Count > 0
+            : _memory.Expanded.TryGetValue(asset.Element, out var expanded) ? expanded : asset.Kind == AssetKind.Cell;
         return node;
     }
 
@@ -117,7 +151,7 @@ public sealed partial class AssetsViewModel : EditableViewModel, ISelectable
         }
     }
 
-    private static AssetNodeViewModel? Find(AssetNodeViewModel node, string element)
+    private static AssetNodeViewModel? Find(AssetNodeViewModel node, string element, bool expand = true)
     {
         if (node.Asset.Element == element)
         {
@@ -125,9 +159,12 @@ public sealed partial class AssetsViewModel : EditableViewModel, ISelectable
         }
         foreach (var child in node.Children.OfType<AssetNodeViewModel>())
         {
-            if (Find(child, element) is { } found)
+            if (Find(child, element, expand) is { } found)
             {
-                node.IsExpanded = true;
+                if (expand)
+                {
+                    node.IsExpanded = true;
+                }
                 return found;
             }
         }
@@ -305,6 +342,14 @@ public sealed partial class AssetsViewModel : EditableViewModel, ISelectable
     }
 }
 
+// Lo que se recuerda de la vista de assets de un PLC al cambiar de pantalla y volver.
+public sealed class AssetsViewMemory
+{
+    // Assets plegados o desplegados a mano; los demás, como salen por defecto.
+    public Dictionary<string, bool> Expanded { get; } = new(StringComparer.Ordinal);
+    public string? Selected { get; set; }
+}
+
 public sealed partial class AssetNodeViewModel(AssetsViewModel owner, Asset asset) : EditableViewModel(owner.EditSession)
 {
     public AssetsViewModel Owner { get; } = owner;
@@ -313,6 +358,8 @@ public sealed partial class AssetNodeViewModel(AssetsViewModel owner, Asset asse
 
     [ObservableProperty]
     public partial bool IsExpanded { get; set; }
+
+    partial void OnIsExpandedChanged(bool value) => Owner.Remember(Asset, value);
 
     // Al arrastrar variables: el asset sobre el que caerían.
     [ObservableProperty]

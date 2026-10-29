@@ -149,6 +149,43 @@ public sealed class MainWindowTests : IDisposable
     }
 
     [AvaloniaFact]
+    public async Task Al_volver_a_assets_se_conserva_lo_plegado_y_lo_seleccionado()
+    {
+        var (_, main, _) = await Open();
+        main.SelectedNode = main.FindNode(NavKind.Assets, "PLC01");
+        Dispatcher.UIThread.RunJobs();
+        var assets = Assert.IsType<AssetsViewModel>(main.Editor);
+        var cell = assets.Roots[0];
+        var operation = cell.Children.OfType<AssetNodeViewModel>().First();
+        var robot = operation.Children.OfType<AssetNodeViewModel>().First(n => n.Element.EndsWith("_01_R", StringComparison.Ordinal));
+        operation.IsExpanded = true;
+        robot.IsExpanded = true;
+        assets.Selected = robot;
+        Dispatcher.UIThread.RunJobs();
+
+        main.SelectedNode = main.FindNode(NavKind.Operations, "PLC01");
+        Dispatcher.UIThread.RunJobs();
+        main.SelectedNode = main.FindNode(NavKind.Assets, "PLC01");
+        Dispatcher.UIThread.RunJobs();
+
+        var back = Assert.IsType<AssetsViewModel>(main.Editor);
+        Assert.NotSame(assets, back);
+        var backOperation = back.Roots[0].Children.OfType<AssetNodeViewModel>().First();
+        Assert.True(backOperation.IsExpanded);
+        var backRobot = Assert.IsType<AssetNodeViewModel>(back.Selected);
+        Assert.Equal(robot.Element, backRobot.Element);
+        Assert.True(backRobot.IsExpanded);
+
+        // Plegar la celda también se recuerda, y lo que abre el buscador no.
+        back.Roots[0].IsExpanded = false;
+        back.Search = "Int16_011_o(002)";
+        back.Search = "";
+        main.SelectedNode = main.FindNode(NavKind.Locations, "PLC01");
+        main.SelectedNode = main.FindNode(NavKind.Assets, "PLC01");
+        Assert.False(Assert.IsType<AssetsViewModel>(main.Editor).Roots[0].IsExpanded);
+    }
+
+    [AvaloniaFact]
     public async Task El_buscador_filtra_por_direccion_y_abre_el_camino()
     {
         var (_, main, _) = await Open();
