@@ -42,9 +42,24 @@ public static class FbXml
                         new XElement("Culture", c),
                         new XElement("Text", text))))));
 
-    // Título del segmento: el primer texto no vacío entre sus idiomas.
-    public static string Title(XElement unit) =>
-        TitleItems(unit).Select(t => t.Value).FirstOrDefault(t => t.Length > 0) ?? "";
+    // Idioma de edición por defecto de los proyectos de TIA.
+    public const string EditCulture = "en-US";
+
+    // Título del segmento. TIA solo cambia el texto del idioma en que se edita, así que si los idiomas
+    // no coinciden vale el que menos se repite (el editado); ante la duda, el inglés y luego el primero.
+    public static string Title(XElement unit)
+    {
+        var texts = TitleItems(unit)
+            .Select(t => (Text: t.Value, Culture: t.Parent?.Element("Culture")?.Value))
+            .Where(t => t.Text.Length > 0)
+            .ToList();
+        return texts.GroupBy(t => t.Text, StringComparer.Ordinal)
+            .OrderBy(g => g.Count())
+            .ThenByDescending(g => g.Any(t => t.Culture == EditCulture))
+            .ThenBy(g => texts.FindIndex(t => t.Text == g.Key))
+            .Select(g => g.Key)
+            .FirstOrDefault() ?? "";
+    }
 
     public static void SetTitle(XElement unit, string title)
     {

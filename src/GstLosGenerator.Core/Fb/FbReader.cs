@@ -90,13 +90,16 @@ public static class FbReader
 
     // El título «Operation 110 :LOC1, LOC2» da los nombres de las locations. Si lleva comentario
     // («Operation 110: texto») o los nombres no cuadran, se buscan por número entre las del PLC.
+    // Un nombre que no es de ninguna location del PLC y cuyo número ya tiene otra location es
+    // un comentario escrito a mano en TIA («Operation 33 :LOC1 Virtual»).
     private static void NameLocations(Operation operation, string title, List<int> numbers, IReadOnlyList<Location> known, FbReadResult result)
     {
         var colon = title.IndexOf(':');
         var tail = colon < 0 ? "" : title[(colon + 1)..].Trim();
         var commentForm = colon > 0 && title[colon - 1] != ' ';
         var names = tail.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-        var fromTitle = !commentForm && names.Length == operation.Locations.Count;
+        var fromTitle = !commentForm && names.Length == operation.Locations.Count
+            && names.Select((name, i) => known.Any(l => l.Name == name) || i >= numbers.Count || !known.Any(l => l.Number == numbers[i])).All(ok => ok);
         for (var i = 0; i < operation.Locations.Count; i++)
         {
             if (i >= numbers.Count || numbers[i] == 0)
