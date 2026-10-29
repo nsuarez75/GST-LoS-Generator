@@ -544,6 +544,62 @@ public class FbTests
         Assert.Equal([L.T("Operación {0}: comentario «{1}» → «{2}»", "110", "", "Carga de piezas")], sync.Changes);
     }
 
+    // Cambia el título de la operación 110 en un idioma (o en todos, con culture null), como hace TIA al editar.
+    private static string RetitleOperation(string xml, string? culture, string title)
+    {
+        var doc = XDocument.Parse(xml);
+        foreach (var item in doc.Descendants("MultilingualTextItem"))
+        {
+            var text = item.Descendants("Text").First();
+            if (text.Value.StartsWith("Operation 110", StringComparison.Ordinal)
+                && (culture is null || item.Descendants("Culture").First().Value == culture))
+            {
+                text.Value = title;
+            }
+        }
+        return doc.ToString();
+    }
+
+    [Fact]
+    public void Leer_FB_toma_el_titulo_del_idioma_editado_en_TIA()
+    {
+        var (project, catalog, plc) = Prepared();
+        var xml = RetitleOperation(Fresh(plc, catalog), "en-US", "Operation 110: Carga de piezas");
+        var clean = Storage.Clone(project).Plcs[0];
+
+        FbSyncPlan.Create(clean, catalog, xml).Apply();
+
+        Assert.Equal("Carga de piezas", clean.FindOperation("110")!.Comment);
+        Assert.Equal(["1000+FIX01", "1000+FIX02"], clean.FindOperation("110")!.Locations.Select(l => l.Location));
+    }
+
+    [Fact]
+    public void Si_cada_idioma_tiene_un_titulo_distinto_vale_el_ingles()
+    {
+        var (_, catalog, plc) = Prepared();
+        var xml = RetitleOperation(Fresh(plc, catalog), "es-ES", "Operation 110: Texto es");
+        xml = RetitleOperation(xml, "en-US", "Operation 110: Texto en");
+        xml = RetitleOperation(xml, "de-DE", "Operation 110: Texto de");
+
+        Assert.Contains("Operation 110: Texto en", Titles(xml));
+    }
+
+    [Fact]
+    public void Leer_FB_toma_como_comentario_un_texto_tras_las_locations_que_no_es_una_location()
+    {
+        var (project, catalog, plc) = Prepared();
+        var xml = RetitleOperation(Fresh(plc, catalog), null, "Operation 110 :1000+FIX01 Virtual, 1000+FIX02");
+        var clean = Storage.Clone(project).Plcs[0];
+
+        var sync = FbSyncPlan.Create(clean, catalog, xml);
+        sync.Apply();
+
+        Assert.Equal("1000+FIX01 Virtual, 1000+FIX02", clean.FindOperation("110")!.Comment);
+        Assert.Equal(["1000+FIX01", "1000+FIX02"], clean.FindOperation("110")!.Locations.Select(l => l.Location));
+        Assert.DoesNotContain(sync.Changes, c => c.Contains("Virtual", StringComparison.Ordinal) && !c.Contains("comentario", StringComparison.Ordinal) && !c.Contains("comment", StringComparison.Ordinal));
+        Assert.Null(clean.FindLocation("1000+FIX01 Virtual"));
+    }
+
     [Fact]
     public void Leer_FB_sin_comentario_deja_el_comentario_vacio()
     {
