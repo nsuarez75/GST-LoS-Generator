@@ -118,7 +118,7 @@ public sealed partial class CatalogViewModel : EditableViewModel
         {
             return;
         }
-        var title = L.T("Aprender {0} de un FB", vm.Type.Name);
+        var title = L.T("Leer FB Tipo: {0}", vm.Type.Name);
         var path = await _dialogs.OpenFile(title, MainViewModel.XmlFilter);
         if (path is null)
         {
@@ -251,7 +251,7 @@ public sealed partial class AssetTypeViewModel : EditableViewModel
         }
     }
     public string Parameters => Type.Parameters.Count == 0
-        ? L.T("Se aprende al leer un FB que use este tipo o con «Aprender de un FB…».")
+        ? L.T("Se aprende con «Leer FB LoS» si el FB usa este tipo, o con «Leer FB Tipo…».")
         : string.Join("\n", Type.Parameters.Select(p => $"{p.Name}  ({p.Section})  {p.Type}"));
 
     public string Fb

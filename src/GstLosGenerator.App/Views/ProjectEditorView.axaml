@@ -98,7 +98,7 @@
                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
                     <c:Icon Kind="info" Foreground="{DynamicResource App.AccentText}" VerticalAlignment="Top" Margin="0,1,0,0" />
                     <TextBlock Grid.Column="1" TextWrapping="Wrap" Foreground="{DynamicResource App.AccentText}"
-                               Text="{l:T 'Flujo de trabajo: importa la LoS, completa en el catálogo la equivalencia de cada tipo con su FB y UDT, crea locations y operaciones en cada PLC, y genera. Cuando el FB ya esté en TIA, expórtalo y usa «Leer FB» antes de volver a generar para no perder lo programado a mano.'}" />
+                               Text="{l:T 'Flujo de trabajo: importa la LoS, completa en el catálogo la equivalencia de cada tipo con su FB y UDT, crea locations y operaciones en cada PLC, y genera. Cuando el FB ya esté en TIA, expórtalo y usa «Leer FB LoS» antes de volver a generar para no perder lo programado a mano.'}" />
                 </Grid>
             </Border>
         </StackPanel>

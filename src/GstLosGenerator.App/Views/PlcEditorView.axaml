@@ -18,10 +18,10 @@
                     </StackPanel>
                 </StackPanel>
                 <WrapPanel Grid.Column="1" Orientation="Horizontal" ItemSpacing="8" LineSpacing="8" HorizontalAlignment="Right" VerticalAlignment="Center">
-                    <Button Command="{Binding ReadFbCommand}" ToolTip.Tip="{l:T 'Leer FB…'}">
+                    <Button Command="{Binding ReadFbCommand}" ToolTip.Tip="{l:T 'Leer FB LoS…'}">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <c:Icon Kind="file-code" />
-                            <TextBlock Text="{l:T 'Leer FB…'}" />
+                            <TextBlock Text="{l:T 'Leer FB LoS…'}" />
                         </StackPanel>
                     </Button>
                     <Button Classes="accent" Command="{Binding GenerateCommand}" ToolTip.Tip="{l:T 'Generar FB y UDT…'}">
@@ -56,7 +56,7 @@
                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
                     <c:Icon Kind="info" Foreground="{DynamicResource App.AccentText}" VerticalAlignment="Top" Margin="0,1,0,0" />
                     <TextBlock Grid.Column="1" TextWrapping="Wrap" Foreground="{DynamicResource App.AccentText}"
-                               Text="{l:T 'El FB actual es el último leído con «Leer FB». Al generar, se parte de él: lo que falta se añade y solo se reescribe lo que marques. Sin FB actual, el FB se genera desde cero.'}" />
+                               Text="{l:T 'El FB actual es el último leído con «Leer FB LoS». Al generar, se parte de él: lo que falta se añade y solo se reescribe lo que marques. Sin FB actual, el FB se genera desde cero.'}" />
                 </Grid>
             </Border>
 

@@ -1,4 +1,4 @@
-// «Aprender de un FB…» en el catálogo: rellena la equivalencia y la interfaz de un tipo a partir de un XML
+// «Leer FB Tipo…» en el catálogo: rellena la equivalencia y la interfaz de un tipo a partir de un XML
 // exportado de TIA, sin tocar el proyecto. El XML puede ser un FB que llama al del tipo (cada llamada a un
 // FB distinto es una opción) o el propio FB del tipo (su interfaz).
 using System.Xml.Linq;

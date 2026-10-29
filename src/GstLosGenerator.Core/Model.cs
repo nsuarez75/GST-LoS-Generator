@@ -29,7 +29,7 @@ public sealed class Plc
     public bool CustomOperationOrder { get; set; }
     // Variables movidas a mano de un asset a otro; se vuelven a aplicar al importar la LoS.
     public List<VariableMove> VariableMoves { get; set; } = [];
-    // FB tal como está en TIA, leído con «Leer FB». Es la base de la siguiente generación.
+    // FB tal como está en TIA, leído con «Leer FB LoS». Es la base de la siguiente generación.
     public string? CurrentFb { get; set; }
     public string? CurrentFbFile { get; set; }
 
