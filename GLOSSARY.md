@@ -21,4 +21,4 @@ Vocabulario del proyecto. La especificación completa está en `docs/especificac
 - **Prefijo de línea**: lo que va antes del primer `_` del nombre de un asset (`LX9_`). La instancia del FB del asset se llama sin él.
 - **FB actual**: el FB de un PLC tal como está en TIA, exportado y leído con «Leer FB». Es la base sobre la que se genera para no perder lo programado a mano.
 - **Variable movida**: variable que se ha arrastrado de un asset a otro en el árbol. La app recuerda el movimiento; si una LoS nueva la vuelve a traer en su asset de origen, pregunta si se deja movida o vuelve a donde dice la LoS.
-- **Leer FB**: acción que lee un FB exportado y adapta la configuración de la app a lo que hay en él (operaciones, asignaciones, equivalencias).
+- **Leer FB**: acción que lee un FB exportado y adapta la configuración de la app a lo que hay en él (operaciones, asignaciones, equivalencias). Las operaciones y los assets que el FB tiene y la app no, los añade.
