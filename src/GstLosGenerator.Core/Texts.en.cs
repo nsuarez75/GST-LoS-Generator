@@ -40,7 +40,8 @@ public static partial class L
         ["{0}: el tipo {1} no tiene equivalencia; no se generará."] = "{0}: type {1} has no equivalence; it will not be generated.",
 
         // ---- generar y leer el FB
-        ["El FB llama a {0}, que no está en el proyecto; no se crea."] = "The FB calls {0}, which is not in the project; it is not created.",
+        ["El FB llama a {0}, que no está en el proyecto, con el FB {1}, que no es de ningún tipo del catálogo; no se crea."] = "The FB calls {0}, which is not in the project, with FB {1}, which belongs to no type in the catalog; it is not created.",
+        ["Asset nuevo: {0} (tipo {1})"] = "New asset: {0} (type {1})",
         ["El FB no tiene interfaz."] = "The FB has no interface.",
         ["El FB no tiene segmentos."] = "The FB has no networks.",
         ["El XML no contiene un FB exportado de TIA Portal."] = "The XML does not contain an FB exported from TIA Portal.",

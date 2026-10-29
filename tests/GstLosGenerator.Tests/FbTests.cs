@@ -437,6 +437,52 @@ public class FbTests
     }
 
     [Fact]
+    public void Leer_FB_crea_los_assets_nuevos_con_su_tipo_y_su_operacion()
+    {
+        var (project, catalog, plc) = Prepared();
+        // Asset añadido a mano en TIA que la app no tiene, con un UDT distinto del de su tipo.
+        plc.Assets.Insert(plc.Assets.FindIndex(a => a.Element == "LX9_01_1000FIX01_01_MOVEHR_02_FIX") + 1,
+            new Asset { Element = "LX9_01_1000FIX01_01_MOVEHR_03_FIX", Type = "AS_STATIC_FIXTURE", Operation = "110", UdtOverride = "Otro_UDT" });
+        var xml = Fresh(plc, catalog);
+        var clean = Storage.Clone(project).Plcs[0];
+        clean.Assets.RemoveAll(a => a.Element.EndsWith("_03_FIX", StringComparison.Ordinal));
+        clean.Operations.Clear();
+        var order = plc.Assets.Select(a => a.Element).ToList();
+
+        var sync = FbSyncPlan.Create(clean, catalog, xml);
+        Assert.Contains(L.T("Asset nuevo: {0} (tipo {1})", "LX9_01_1000FIX01_01_MOVEHR_03_FIX", "AS_STATIC_FIXTURE"), sync.Changes);
+        Assert.Contains(L.T("Operación nueva: {0}", "110"), sync.Changes);
+        sync.Apply();
+
+        var added = clean.FindAsset("LX9_01_1000FIX01_01_MOVEHR_03_FIX")!;
+        Assert.Equal("AS_STATIC_FIXTURE", added.Type);
+        Assert.True(added.Manual);
+        Assert.Equal("110", added.Operation);
+        Assert.Equal("Otro_UDT", added.UdtOverride);
+        Assert.Null(added.FbOverride);
+        Assert.NotNull(clean.FindOperation("110"));
+        Assert.Equal(order, clean.Assets.Select(a => a.Element));
+        Assert.DoesNotContain(FbSyncPlan.Create(clean, catalog, xml).Changes, c => c.StartsWith(L.T("Asset nuevo: {0} (tipo {1})", "", ""), StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Leer_FB_no_crea_un_asset_si_ningun_tipo_usa_su_FB()
+    {
+        var (project, catalog, plc) = Prepared();
+        var xml = Fresh(plc, catalog);
+        var clean = Storage.Clone(project).Plcs[0];
+        clean.Assets.RemoveAll(a => a.Element == "LX9_01_1000FIX01_01_MOVEHR_01_R");
+        catalog.Find("AS_ROBOT")!.Fb = "";
+
+        var sync = FbSyncPlan.Create(clean, catalog, xml);
+        sync.Apply();
+
+        Assert.Null(clean.FindAsset("LX9_01_1000FIX01_01_MOVEHR_01_R"));
+        Assert.Contains(L.T("El FB llama a {0}, que no está en el proyecto, con el FB {1}, que no es de ningún tipo del catálogo; no se crea.",
+            "LX9_01_1000FIX01_01_MOVEHR_01_R", "LoS_AS_ROBOT"), sync.Warnings);
+    }
+
+    [Fact]
     public void Leer_FB_aprende_la_equivalencia_de_un_tipo_que_no_la_tiene()
     {
         var (_, catalog, plc) = Prepared();

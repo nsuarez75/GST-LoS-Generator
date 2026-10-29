@@ -102,9 +102,10 @@ Las señales IN no generan nada en el FB.
 ## Leer FB
 
 - Lee un FB exportado de TIA y adapta la configuración de la app a lo que hay en él:
-  - operaciones, con sus locations, `Loc`, `Mask`, `VirtualLoc` y señales;
+  - operaciones, con sus locations, `Loc`, `Mask`, `VirtualLoc` y señales; las que la app no tiene se añaden;
   - la operación de cada asset;
-  - el FB y el UDT que llama cada asset.
+  - el FB y el UDT que llama cada asset;
+  - assets nuevos: los que el FB llama y la app no tiene se crean como assets manuales, con el tipo del catálogo cuya equivalencia usa ese FB (si el UDT no es el del tipo, queda como UDT propio) y su operación. Si ningún tipo usa ese FB, se avisa y no se crea.
 - Muestra un resumen de diferencias y, al aplicar, lo del FB gana.
 - El FB queda guardado en el proyecto como «FB actual» del PLC y es la base de la siguiente generación, conservando la lógica cableada a mano.
 

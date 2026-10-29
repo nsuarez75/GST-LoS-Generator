@@ -10,6 +10,8 @@ public sealed class FbSyncPlan
     private readonly string _xml;
     private readonly string? _file;
     private readonly List<Action> _actions = [];
+    // Asset de la llamada anterior en el FB, para colocar detrás los assets nuevos.
+    private string? _previousCall;
 
     public List<string> Changes { get; } = [];
     public List<string> Warnings { get; } = [];
@@ -103,10 +105,12 @@ public sealed class FbSyncPlan
 
     private void CompareCall(ReadCall call)
     {
+        var previous = _previousCall;
+        _previousCall = call.Element;
         var asset = _plc.FindAsset(call.Element);
         if (asset is null)
         {
-            Warnings.Add(L.T("El FB llama a {0}, que no está en el proyecto; no se crea.", call.Element));
+            AddAsset(call, previous);
             return;
         }
         if ((asset.Operation ?? "") != (call.Operation ?? ""))
@@ -146,6 +150,38 @@ public sealed class FbSyncPlan
         {
             _actions.Add(() => type.Parameters = [.. call.Parameters]);
         }
+    }
+
+    // Asset llamado en el FB que la app no tiene (creado a mano en TIA): se crea como asset manual
+    // con el tipo del catálogo cuya equivalencia usa ese FB, detrás del asset de la llamada anterior.
+    private void AddAsset(ReadCall call, string? previous)
+    {
+        var candidates = _catalog.Types.Where(t => !t.NoFb && t.HasEquivalence && t.Fb == call.Fb).ToList();
+        var type = candidates.FirstOrDefault(t => t.Udt == call.Udt) ?? candidates.FirstOrDefault();
+        if (type is null)
+        {
+            Warnings.Add(L.T("El FB llama a {0}, que no está en el proyecto, con el FB {1}, que no es de ningún tipo del catálogo; no se crea.", call.Element, call.Fb));
+            return;
+        }
+        var asset = new Asset
+        {
+            Element = call.Element,
+            Type = type.Name,
+            Kind = AssetKind.Asset,
+            Manual = true,
+            Operation = call.Operation,
+            UdtOverride = call.Udt is null || call.Udt == type.Udt ? null : call.Udt,
+        };
+        Changes.Add(L.T("Asset nuevo: {0} (tipo {1})", asset.Element, type.Name));
+        _actions.Add(() =>
+        {
+            var index = previous is null ? -1 : _plc.Assets.FindIndex(a => a.Element == previous);
+            _plc.Assets.Insert(index < 0 ? _plc.Assets.Count : index + 1, asset);
+            if (type.Parameters.Count == 0 && call.Parameters.Count > 0)
+            {
+                type.Parameters = [.. call.Parameters];
+            }
+        });
     }
 
     private static void Learn(AssetType type, ReadCall call)
