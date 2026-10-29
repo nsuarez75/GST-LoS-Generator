@@ -30,7 +30,7 @@
                 <Button Grid.Column="3" Command="{Binding ReadFbCommand}" VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal" Spacing="6">
                         <c:Icon Kind="file-code" />
-                        <TextBlock Text="{l:T 'Leer FB…'}" />
+                        <TextBlock Text="{l:T 'Leer FB LoS…'}" />
                     </StackPanel>
                 </Button>
             </Grid>

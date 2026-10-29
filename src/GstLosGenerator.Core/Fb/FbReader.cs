@@ -1,4 +1,4 @@
-// «Leer FB»: saca de un FB exportado las operaciones, qué operación va a cada asset
+// «Leer FB LoS»: saca de un FB exportado las operaciones, qué operación va a cada asset
 // y el FB y UDT que llama cada asset, para adaptar la app a lo que hay en TIA.
 using System.Xml.Linq;
 

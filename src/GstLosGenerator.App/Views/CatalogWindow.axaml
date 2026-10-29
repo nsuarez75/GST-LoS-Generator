@@ -117,7 +117,7 @@
                                                     ToolTip.Tip="{l:T 'Rellena la equivalencia y la interfaz desde un XML de FB exportado de TIA. Solo toca este tipo.'}">
                                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                                     <c:Icon Kind="file-code" />
-                                                    <TextBlock Text="{l:T 'Aprender de un FB…'}" />
+                                                    <TextBlock Text="{l:T 'Leer FB Tipo…'}" />
                                                 </StackPanel>
                                             </Button>
                                         </Grid>

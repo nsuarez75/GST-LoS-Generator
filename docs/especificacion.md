@@ -17,7 +17,7 @@ La importación a TIA Portal queda fuera: la hará otra app con Openness, que ex
 - Tema claro y oscuro: por defecto sigue a Windows, con selector «Claro / Oscuro / Sistema» que se recuerda.
 - Idioma castellano/inglés: por defecto el de Windows, con selector. Solo cambia la interfaz; el código generado no cambia.
 - Ventana principal:
-  - Barra superior: archivo (nuevo, abrir, guardar y más), deshacer y rehacer, las acciones del proyecto en orden (Importar LoS, Catálogo, Leer FB y Generar) y, a la derecha, idioma, tema y Acerca de. La interfaz se adapta al ancho de la ventana.
+  - Barra superior: archivo (nuevo, abrir, guardar y más), deshacer y rehacer, las acciones del proyecto en orden (Importar LoS, Catálogo, Leer FB LoS y Generar) y, a la derecha, idioma, tema y Acerca de. La interfaz se adapta al ancho de la ventana.
   - Panel izquierdo: árbol del proyecto (proyecto → PLCs → Devices, Assets, Operaciones, Locations).
   - Zona central: el editor de lo seleccionado.
   - Barra inferior de avisos: al pulsar uno, lleva a lo que lo provoca.
@@ -99,7 +99,7 @@ Las señales IN no generan nada en el FB.
 - En Struct TO DEVICE solo se reescriben las regiones que la app reconoce por nombre; las sub-regiones manuales se conservan.
 - Validaciones antes de escribir (operación sin locations o sin assets, asset sin equivalencia, dirección repetida en un device): aviso con la lista, y se deja generar.
 
-## Leer FB
+## Leer FB LoS
 
 - Lee un FB exportado de TIA y adapta la configuración de la app a lo que hay en él:
   - operaciones, con sus locations, `Loc`, `Mask`, `VirtualLoc` y señales; las que la app no tiene se añaden;

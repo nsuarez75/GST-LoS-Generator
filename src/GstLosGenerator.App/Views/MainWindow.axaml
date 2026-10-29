@@ -87,10 +87,10 @@
                             <TextBlock Text="{l:T 'Catálogo'}" Classes="barlabel" />
                         </StackPanel>
                     </Button>
-                    <Button Command="{Binding ReadFbCommand}" ToolTip.Tip="{l:T 'Leer FB… (Ctrl+R)'}">
+                    <Button Command="{Binding ReadFbCommand}" ToolTip.Tip="{l:T 'Leer FB LoS… (Ctrl+R)'}">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <c:Icon Kind="file-code" />
-                            <TextBlock Text="{l:T 'Leer FB'}" Classes="barlabel" />
+                            <TextBlock Text="{l:T 'Leer FB LoS'}" Classes="barlabel" />
                         </StackPanel>
                     </Button>
                     <Button Classes="accent" Command="{Binding GenerateCommand}" ToolTip.Tip="{l:T 'Generar FB y UDT… (F5)'}">

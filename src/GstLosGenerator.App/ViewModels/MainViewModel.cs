@@ -397,7 +397,7 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     private async Task ReadFb()
     {
-        var plc = await ChoosePlc(L.T("Leer FB"));
+        var plc = await ChoosePlc(L.T("Leer FB LoS"));
         if (plc is not null)
         {
             await ReadFbFor(plc);
@@ -406,7 +406,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     public async Task ReadFbFor(Plc plc)
     {
-        var path = await Dialogs.OpenFile(L.T("Leer FB de {0}", plc.Name), XmlFilter);
+        var path = await Dialogs.OpenFile(L.T("Leer FB LoS de {0}", plc.Name), XmlFilter);
         if (path is null)
         {
             return;
@@ -419,11 +419,11 @@ public sealed partial class MainViewModel : ObservableObject
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or FbFormatException)
         {
-            await Dialogs.Message(L.T("Leer FB"), L.T("No se pudo leer el FB: {0}", e.Message));
+            await Dialogs.Message(L.T("Leer FB LoS"), L.T("No se pudo leer el FB: {0}", e.Message));
             return;
         }
         var changes = plan.Changes.Count > 0 ? plan.Changes : [L.T("La configuración ya coincide con el FB.")];
-        var (accepted, _) = await Dialogs.Changes(L.T("Leer FB de {0}: {1}", plc.Name, Path.GetFileName(path)), changes, plan.Warnings);
+        var (accepted, _) = await Dialogs.Changes(L.T("Leer FB LoS de {0}: {1}", plc.Name, Path.GetFileName(path)), changes, plan.Warnings);
         if (accepted)
         {
             Session.Change("read-fb", plan.Apply);
