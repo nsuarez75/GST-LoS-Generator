@@ -1,5 +1,6 @@
 // Estado de trabajo: el proyecto abierto, el catálogo de tipos y el historial para deshacer y rehacer.
 // Cada edición guarda antes una foto (JSON) del proyecto y del catálogo.
+using GstLosGenerator.App.ViewModels;
 using GstLosGenerator.Core;
 
 namespace GstLosGenerator.App;
@@ -21,6 +22,8 @@ public sealed class Session
     public string? ProjectPath { get; private set; }
     public string CatalogPath { get; }
     public bool Dirty { get; private set; }
+    // Cómo se dejó la vista de assets de cada PLC; solo mientras la app sigue abierta.
+    public Dictionary<string, AssetsViewMemory> AssetsViews { get; } = new(StringComparer.Ordinal);
 
     public bool CanUndo => _undo.Count > 0;
     public bool CanRedo => _redo.Count > 0;
@@ -144,5 +147,6 @@ public sealed class Session
         _undo.Clear();
         _redo.Clear();
         _lastKey = null;
+        AssetsViews.Clear();
     }
 }
