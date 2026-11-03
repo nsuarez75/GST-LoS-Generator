@@ -16,7 +16,7 @@ public sealed partial class AssetsViewModel : EditableViewModel, ISelectable
     public Plc Plc { get; }
     public ObservableCollection<AssetNodeViewModel> Roots { get; } = [];
     public IReadOnlyList<string> TypeNames { get; }
-    public IReadOnlyList<string> OperationChoices { get; }
+    public IReadOnlyList<OperationChoice> OperationChoices { get; }
 
     [ObservableProperty]
     public partial string Search { get; set; } = "";
@@ -35,7 +35,8 @@ public sealed partial class AssetsViewModel : EditableViewModel, ISelectable
         _memory = memory;
         TypeNames = Session.Catalog.Types.Select(t => t.Name).Concat(plc.Assets.Select(a => a.Type))
             .Where(n => n.Length > 0).Distinct().Order(StringComparer.Ordinal).ToList();
-        OperationChoices = [NoOperation, .. plc.Operations.Select(o => o.Id).Order(Core.Fb.OperationIdComparer.Instance)];
+        OperationChoices = [new OperationChoice(NoOperation, ""), .. plc.Operations
+            .OrderBy(o => o.Id, Core.Fb.OperationIdComparer.Instance).Select(OperationChoice.Of)];
         Build();
         if (_memory.Selected is { } selected)
         {
@@ -367,7 +368,7 @@ public sealed partial class AssetNodeViewModel(AssetsViewModel owner, Asset asse
 
     public string Element => Asset.Element;
     public IReadOnlyList<string> TypeNames => Owner.TypeNames;
-    public IReadOnlyList<string> OperationChoices => Owner.OperationChoices;
+    public IReadOnlyList<OperationChoice> OperationChoices => Owner.OperationChoices;
     public string Status => Owner.StatusOf(Asset);
     public bool HasStatus => Status.Length > 0;
 
@@ -401,6 +402,18 @@ public sealed partial class AssetNodeViewModel(AssetsViewModel owner, Asset asse
             Edit(Asset.Operation, id, v => Asset.Operation = v);
         }
     }
+}
+
+// Una operación en el desplegable de un asset: su número y, al lado, su comentario
+// (o sus locations si no tiene), como en la lista de operaciones.
+public sealed record OperationChoice(string Id, string Detail)
+{
+    public bool HasDetail => Detail.Length > 0;
+
+    public static OperationChoice Of(Operation operation) => new(operation.Id,
+        operation.Comment.Trim() is { Length: > 0 } comment
+            ? comment
+            : string.Join(", ", operation.Locations.Select(l => l.Location)));
 }
 
 public sealed partial class VariableRowViewModel(Session session, AssetNodeViewModel owner, AssetVariable variable) : EditableViewModel(session)

@@ -106,7 +106,24 @@
                                 <TextBlock Grid.Column="1" Text="{Binding Element}" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
                                            ToolTip.Tip="{Binding Element}" Margin="0,0,8,0" />
                                 <ComboBox Grid.Column="2" Classes="colType" ItemsSource="{Binding TypeNames}" SelectedItem="{Binding Type}" Margin="0,0,8,0" />
-                                <ComboBox Grid.Column="3" Classes="colOp" ItemsSource="{Binding OperationChoices}" SelectedItem="{Binding Operation}" Margin="0,0,8,0" />
+                                <!-- Desplegado enseña número y comentario; cerrado, solo el número -->
+                                <ComboBox Grid.Column="3" Classes="colOp" ItemsSource="{Binding OperationChoices}"
+                                          SelectedValueBinding="{Binding Id}" SelectedValue="{Binding Operation}" Margin="0,0,8,0">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate DataType="vm:OperationChoice">
+                                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                                <TextBlock Text="{Binding Id}" MinWidth="32" />
+                                                <TextBlock Text="{Binding Detail}" IsVisible="{Binding HasDetail}" Foreground="{DynamicResource App.TextMuted}"
+                                                           MaxWidth="320" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Detail}" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                    <ComboBox.SelectionBoxItemTemplate>
+                                        <DataTemplate DataType="vm:OperationChoice">
+                                            <TextBlock Text="{Binding Id}" TextTrimming="CharacterEllipsis" />
+                                        </DataTemplate>
+                                    </ComboBox.SelectionBoxItemTemplate>
+                                </ComboBox>
                                 <TextBlock Grid.Column="4" Classes="badge colState" Text="{Binding Status}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Status}" />
                             </Grid>
                         </TreeDataTemplate>
