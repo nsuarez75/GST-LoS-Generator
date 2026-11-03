@@ -149,6 +149,33 @@ public sealed class MainWindowTests : IDisposable
     }
 
     [AvaloniaFact]
+    public async Task El_desplegable_de_operacion_enseña_el_comentario_y_cambia_la_operacion()
+    {
+        var (window, main, _) = await Open();
+        var plc = main.Session.Project.Plcs[0];
+        plc.Operations.Add(new Operation { Id = "120", Comment = "Carga manual" });
+        main.Rebuild();
+        main.SelectedNode = main.FindNode(NavKind.Assets, "PLC01");
+        Dispatcher.UIThread.RunJobs();
+        var assets = Assert.IsType<AssetsViewModel>(main.Editor);
+        Assert.Equal(["—", "110", "120"], assets.OperationChoices.Select(c => c.Id));
+        Assert.Equal(["", "1000+FIX01", "Carga manual"], assets.OperationChoices.Select(c => c.Detail));
+
+        assets.Roots[0].IsExpanded = true;
+        Dispatcher.UIThread.RunJobs();
+        var combo = window.GetVisualDescendants().OfType<ComboBox>()
+            .First(c => c.DataContext is AssetNodeViewModel { Element: "LX9_01_1000FIX01_01_MOVEHR" } && c.Classes.Contains("colOp"));
+        Assert.Equal("110", Assert.IsType<OperationChoice>(combo.SelectedItem).Id);
+
+        combo.IsDropDownOpen = true;
+        Shot(window, "12-desplegable-operacion");
+        combo.SelectedItem = assets.OperationChoices[2];
+        Assert.Equal("120", plc.FindAsset("LX9_01_1000FIX01_01_MOVEHR")!.Operation);
+        combo.SelectedItem = assets.OperationChoices[0];
+        Assert.Null(plc.FindAsset("LX9_01_1000FIX01_01_MOVEHR")!.Operation);
+    }
+
+    [AvaloniaFact]
     public async Task Al_volver_a_assets_se_conserva_lo_plegado_y_lo_seleccionado()
     {
         var (_, main, _) = await Open();
