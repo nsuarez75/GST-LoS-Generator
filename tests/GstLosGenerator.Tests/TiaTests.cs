@@ -70,6 +70,10 @@ public class TiaTests
             <?xml version="1.0" encoding="utf-8"?>
             <Document>
               <Engineering version="V19" />
+              <DocumentInfo>
+                <Created>2026-11-01T10:00:01.1234567Z</Created>
+                <ExportSetting>WithDefaults</ExportSetting>
+              </DocumentInfo>
               <SW.Blocks.FB ID="0">
                 <AttributeList>
                   <ModifiedDate>2026-11-01T10:00:00Z</ModifiedDate>
@@ -78,7 +82,9 @@ public class TiaTests
               </SW.Blocks.FB>
             </Document>
             """;
-        var again = first.Replace("2026-11-01T10:00:00Z", "2026-11-09T08:30:00Z").Replace("  ", "    ");
+        // Otra exportación del mismo FB: otra hora en la cabecera y en la fecha de modificación.
+        var again = first.Replace("2026-11-01T10:00:01.1234567Z", "2026-11-10T09:15:42.7654321Z")
+            .Replace("2026-11-01T10:00:00Z", "2026-11-09T08:30:00Z").Replace("  ", "    ");
         var changed = first.Replace("User_LoS_Device_In_FB", "Otro_FB");
 
         Assert.True(FbCompare.Same(first, again));
