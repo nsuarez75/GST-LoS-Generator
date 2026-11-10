@@ -89,4 +89,6 @@ public sealed class AppSettings
     // Vacío: el idioma de Windows.
     public string? Language { get; set; }
     public string? LastProject { get; set; }
+    // «Generar»: incluir los UDT de los devices al guardar archivos o subir a TIA; se recuerda lo último elegido.
+    public bool IncludeUdts { get; set; } = true;
 }

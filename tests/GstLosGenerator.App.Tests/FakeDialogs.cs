@@ -58,4 +58,19 @@ internal sealed class FakeDialogs : IDialogs
     public Task ShowCatalog(CatalogViewModel catalog) => Task.CompletedTask;
 
     public Task ShowGenerate(GenerateViewModel generate) => Task.CompletedTask;
+
+    // Lo que hace el test con la ventana de TIA; sin nada, se carga y se acepta lo que salga seleccionado.
+    public Func<TiaPickerViewModel, Task>? TiaPicker { get; set; }
+
+    public async Task ShowTiaPicker(TiaPickerViewModel picker)
+    {
+        if (TiaPicker is not null)
+        {
+            await TiaPicker(picker);
+            return;
+        }
+        // Con una sesión de TIA de prueba, que responde al momento, el árbol ya está cargado al volver de Load.
+        await picker.Load();
+        picker.Accept();
+    }
 }

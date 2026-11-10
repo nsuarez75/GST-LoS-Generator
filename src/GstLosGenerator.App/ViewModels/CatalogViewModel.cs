@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GstLosGenerator.Core;
 using GstLosGenerator.Core.Fb;
+using GstLosGenerator.Core.Tia;
 
 namespace GstLosGenerator.App.ViewModels;
 
@@ -10,6 +11,7 @@ namespace GstLosGenerator.App.ViewModels;
 public sealed partial class CatalogViewModel : EditableViewModel
 {
     private readonly IDialogs _dialogs;
+    private readonly ITia _tia;
 
     public ObservableCollection<AssetTypeViewModel> Types { get; } = [];
 
@@ -22,9 +24,10 @@ public sealed partial class CatalogViewModel : EditableViewModel
     [ObservableProperty]
     public partial bool OnlyPending { get; set; }
 
-    public CatalogViewModel(Session session, IDialogs dialogs) : base(session)
+    public CatalogViewModel(Session session, IDialogs dialogs, ITia? tia = null) : base(session)
     {
         _dialogs = dialogs;
+        _tia = tia ?? new NoTia();
         Build();
     }
 
@@ -109,7 +112,7 @@ public sealed partial class CatalogViewModel : EditableViewModel
         }
     }
 
-    // Rellena la equivalencia y la interfaz del tipo seleccionado desde un XML de FB exportado de TIA.
+    // Rellena la equivalencia y la interfaz del tipo seleccionado desde un FB de TIA o un XML exportado de TIA.
     // Solo toca ese tipo; antes de aplicar enseña las diferencias.
     [RelayCommand]
     private async Task LearnFromFb()
@@ -119,17 +122,45 @@ public sealed partial class CatalogViewModel : EditableViewModel
             return;
         }
         var title = L.T("Leer FB Tipo: {0}", vm.Type.Name);
-        var path = await _dialogs.OpenFile(title, MainViewModel.XmlFilter);
-        if (path is null)
+        var fromTia = false;
+        if (_tia.Available)
         {
-            return;
+            var choice = await _dialogs.Pick(title, L.T("¿De dónde se lee el FB?"), [L.T("Desde TIA…"), L.T("Desde archivo…")]);
+            if (choice is null)
+            {
+                return;
+            }
+            fromTia = choice == 0;
         }
+        string path;
         List<LearnSource> sources;
         try
         {
-            sources = TypeLearner.Sources(await File.ReadAllTextAsync(path));
+            string xml;
+            if (fromTia)
+            {
+                using var session = _tia.Open();
+                var picker = new TiaPickerViewModel(_dialogs, session, TiaPickMode.Block, null, title);
+                await _dialogs.ShowTiaPicker(picker);
+                if (picker.Result is not { } link)
+                {
+                    return;
+                }
+                xml = await session.Export(link, new Progress<string>());
+                path = MainViewModel.TiaLabel(link);
+            }
+            else
+            {
+                if (await _dialogs.OpenFile(title, MainViewModel.XmlFilter) is not { } file)
+                {
+                    return;
+                }
+                path = file;
+                xml = await File.ReadAllTextAsync(path);
+            }
+            sources = TypeLearner.Sources(xml);
         }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException or FbFormatException)
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or FbFormatException or TiaException)
         {
             await _dialogs.Message(title, L.T("No se pudo leer el FB: {0}", e.Message));
             return;

@@ -43,12 +43,19 @@
                 <Button Grid.Column="2" Command="{Binding PickFolderCommand}" ToolTip.Tip="{l:T 'Elegir…'}">
                     <c:Icon Kind="folder" />
                 </Button>
-                <StackPanel Grid.Row="1" Grid.ColumnSpan="3" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                <TextBlock Grid.Row="1" Text="{Binding Status}" Classes="muted" FontSize="12" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                <StackPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
                     <Button Content="{l:T 'Cerrar'}" Click="OnClose" IsCancel="True" />
+                    <Button Command="{Binding UploadCommand}" IsEnabled="{Binding !IsBusy}" IsVisible="{Binding CanUpload}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <c:Icon Kind="upload" />
+                            <TextBlock Text="{l:T 'Subir a TIA…'}" />
+                        </StackPanel>
+                    </Button>
                     <Button Classes="accent" Command="{Binding GenerateCommand}" IsEnabled="{Binding !IsBusy}" IsDefault="True">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <c:Icon Kind="zap" />
-                            <TextBlock Text="{l:T 'Generar'}" />
+                            <TextBlock Text="{l:T 'Guardar archivos'}" />
                         </StackPanel>
                     </Button>
                 </StackPanel>
@@ -96,7 +103,7 @@
                             <CheckBox Content="{l:T 'Struct TO DEVICE'}" IsChecked="{Binding Struct}" />
                             <CheckBox Content="{l:T 'Swaps (Float y enteros)'}" IsChecked="{Binding Swaps}" />
                             <Border Classes="divider" Margin="0,4" />
-                            <CheckBox Content="{l:T 'Escribir los UDT de los devices'}" IsChecked="{Binding Udts}" />
+                            <CheckBox Content="{l:T 'Incluir los UDT de los devices'}" IsChecked="{Binding Udts}" />
                         </StackPanel>
                     </Border>
 

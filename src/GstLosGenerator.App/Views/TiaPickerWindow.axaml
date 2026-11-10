@@ -1,0 +1,75 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:GstLosGenerator.App.ViewModels"
+        xmlns:c="using:GstLosGenerator.App.Controls"
+        xmlns:l="using:GstLosGenerator.App"
+        x:Class="GstLosGenerator.App.Views.TiaPickerWindow"
+        Icon="/Assets/gst-los-generator.png"
+        x:DataType="vm:TiaPickerViewModel"
+        Title="{Binding Title}"
+        Width="720" Height="640" MinWidth="480" MinHeight="420"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False">
+    <DockPanel>
+        <Border DockPanel.Dock="Top" Classes="bar" BorderThickness="0,0,0,1" Padding="16,10">
+            <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10">
+                <Border Classes="brand">
+                    <c:Icon Kind="cpu" Width="17" Height="17" Foreground="White" StrokeWidth="2.4" />
+                </Border>
+                <ComboBox Grid.Column="1" ItemsSource="{Binding Projects}" SelectedItem="{Binding Project}" HorizontalAlignment="Stretch"
+                          VerticalAlignment="Center" IsEnabled="{Binding !IsBusy}" ToolTip.Tip="{Binding Project}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="x:String">
+                            <TextBlock Text="{Binding}" TextTrimming="CharacterEllipsis" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                <Button Grid.Column="2" Command="{Binding OpenFileCommand}" IsEnabled="{Binding !IsBusy}" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <c:Icon Kind="folder" />
+                        <TextBlock Text="{l:T 'Abrir proyecto…'}" />
+                    </StackPanel>
+                </Button>
+                <Button Grid.Column="3" Command="{Binding ReloadCommand}" IsEnabled="{Binding !IsBusy}" VerticalAlignment="Center"
+                        ToolTip.Tip="{l:T 'Volver a leer el proyecto'}">
+                    <c:Icon Kind="redo" />
+                </Button>
+            </Grid>
+        </Border>
+
+        <Border DockPanel.Dock="Bottom" Classes="bar" BorderThickness="0,1,0,0" Padding="16,10">
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                <StackPanel Spacing="2" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Status}" Classes="muted" FontSize="12" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding DestinationNote}" FontSize="12" TextWrapping="Wrap" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <Button Content="{l:T 'Cancelar'}" Click="OnClose" IsCancel="True" />
+                    <Button Classes="accent" Content="{l:T 'Aceptar'}" Command="{Binding AcceptCommand}" IsEnabled="{Binding CanAccept}" IsDefault="True" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <DockPanel Margin="16,12,16,12">
+            <TextBlock DockPanel.Dock="Top" Classes="muted" FontSize="12" Margin="0,0,0,8" Text="{Binding Hint}" TextWrapping="Wrap" />
+            <Border Classes="card" Padding="4">
+                <TreeView ItemsSource="{Binding Nodes}" SelectedItem="{Binding Selected}" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                          DoubleTapped="OnDoubleTapped">
+                    <TreeView.ItemTemplate>
+                        <TreeDataTemplate DataType="vm:TiaNode" ItemsSource="{Binding Children}">
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                                <c:Icon Kind="{Binding Icon}" Width="15" Height="15" VerticalAlignment="Center" Foreground="{DynamicResource App.TextMuted}" />
+                                <TextBlock Grid.Column="1" Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="2" Text="{Binding Detail}" Classes="label" FontSize="11.5" Margin="4,0,6,0" />
+                            </Grid>
+                        </TreeDataTemplate>
+                    </TreeView.ItemTemplate>
+                    <TreeView.Styles>
+                        <Style Selector="TreeViewItem" x:DataType="vm:TiaNode">
+                            <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                        </Style>
+                    </TreeView.Styles>
+                </TreeView>
+            </Border>
+        </DockPanel>
+    </DockPanel>
+</Window>

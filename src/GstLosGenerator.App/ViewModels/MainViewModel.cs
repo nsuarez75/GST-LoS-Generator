@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GstLosGenerator.Core;
 using GstLosGenerator.Core.Fb;
+using GstLosGenerator.Core.Tia;
 
 namespace GstLosGenerator.App.ViewModels;
 
@@ -25,6 +26,8 @@ public sealed partial class MainViewModel : ObservableObject
     // La ventana sobre la que se abren los diálogos; cambia si se vuelve a crear la ventana.
     public IDialogs Dialogs { get; set; }
     public AppSettings Settings { get; }
+    // Conexión con TIA Portal; sin ella, solo se trabaja con archivos.
+    public ITia Tia { get; }
     public ObservableCollection<NavNode> Tree { get; } = [];
     public ObservableCollection<IssueViewModel> Issues { get; } = [];
 
@@ -59,9 +62,10 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     public partial IssueViewModel? SelectedIssue { get; set; }
 
-    public MainViewModel(Session session, IDialogs dialogs, AppSettings settings, Action<AppSettings> saveSettings)
+    public MainViewModel(Session session, IDialogs dialogs, AppSettings settings, Action<AppSettings> saveSettings, ITia? tia = null)
     {
         Session = session;
+        Tia = tia ?? new NoTia();
         Dialogs = dialogs;
         Settings = settings;
         _saveSettings = saveSettings;
@@ -69,6 +73,8 @@ public sealed partial class MainViewModel : ObservableObject
         Session.Reset += Rebuild;
         Rebuild();
     }
+
+    public void SaveSettings() => _saveSettings(Settings);
 
     public bool IsThemeSystem => Settings.Theme == AppSettings.ThemeSystem;
     public bool IsThemeLight => Settings.Theme == AppSettings.ThemeLight;
@@ -390,7 +396,7 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     private async Task OpenCatalog()
     {
-        await Dialogs.ShowCatalog(new CatalogViewModel(Session, Dialogs));
+        await Dialogs.ShowCatalog(new CatalogViewModel(Session, Dialogs, Tia));
         Rebuild();
     }
 
@@ -406,29 +412,97 @@ public sealed partial class MainViewModel : ObservableObject
 
     public async Task ReadFbFor(Plc plc)
     {
-        var path = await Dialogs.OpenFile(L.T("Leer FB LoS de {0}", plc.Name), XmlFilter);
-        if (path is null)
+        var title = L.T("Leer FB LoS de {0}", plc.Name);
+        var fromTia = await ChooseSource(title);
+        if (fromTia is null)
         {
             return;
         }
+        if (fromTia == false)
+        {
+            var path = await Dialogs.OpenFile(title, XmlFilter);
+            if (path is null)
+            {
+                return;
+            }
+            string text;
+            try
+            {
+                text = await File.ReadAllTextAsync(path);
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            {
+                await Dialogs.Message(L.T("Leer FB LoS"), L.T("No se pudo leer el FB: {0}", e.Message));
+                return;
+            }
+            await ApplyFb(plc, text, path, null);
+            return;
+        }
+        using var session = Tia.Open();
+        var picker = new TiaPickerViewModel(Dialogs, session, TiaPickMode.Block, plc.Tia, title);
+        await Dialogs.ShowTiaPicker(picker);
+        if (picker.Result is not { } link)
+        {
+            return;
+        }
+        string xml;
+        try
+        {
+            xml = await session.Export(link, new Progress<string>());
+        }
+        catch (Exception e) when (e is TiaException or IOException or UnauthorizedAccessException)
+        {
+            await Dialogs.Message(L.T("Leer FB LoS"), L.T("No se pudo leer el FB: {0}", e.Message));
+            return;
+        }
+        await ApplyFb(plc, xml, TiaLabel(link), link);
+    }
+
+    // Cómo se ve en la app un FB leído de TIA o subido a TIA (en lugar del nombre del archivo).
+    public static string TiaLabel(TiaLink link) => L.T("TIA · {0} · {1}", link.Plc, link.Block);
+
+    // Lee el FB, enseña los cambios y, si se aceptan, adapta la configuración; link es dónde está en TIA.
+    private async Task ApplyFb(Plc plc, string xml, string source, TiaLink? link)
+    {
         FbSyncPlan plan;
         try
         {
-            var xml = await File.ReadAllTextAsync(path);
-            plan = FbSyncPlan.Create(plc, Session.Catalog, xml, path);
+            plan = FbSyncPlan.Create(plc, Session.Catalog, xml, source);
         }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException or FbFormatException)
+        catch (FbFormatException e)
         {
             await Dialogs.Message(L.T("Leer FB LoS"), L.T("No se pudo leer el FB: {0}", e.Message));
             return;
         }
         var changes = plan.Changes.Count > 0 ? plan.Changes : [L.T("La configuración ya coincide con el FB.")];
-        var (accepted, _) = await Dialogs.Changes(L.T("Leer FB LoS de {0}: {1}", plc.Name, Path.GetFileName(path)), changes, plan.Warnings);
+        var (accepted, _) = await Dialogs.Changes(L.T("Leer FB LoS de {0}: {1}", plc.Name, Path.GetFileName(source)), changes, plan.Warnings);
         if (accepted)
         {
-            Session.Change("read-fb", plan.Apply);
+            Session.Change("read-fb", () =>
+            {
+                plan.Apply();
+                if (link is not null)
+                {
+                    plc.Tia = link;
+                }
+            });
             Rebuild();
         }
+    }
+
+    // ¿De dónde se lee? true: de TIA; false: de un archivo; null: cancelado. Sin TIA, siempre de un archivo.
+    public async Task<bool?> ChooseSource(string title)
+    {
+        if (!Tia.Available)
+        {
+            return false;
+        }
+        return await Dialogs.Pick(title, L.T("¿De dónde se lee el FB?"), [L.T("Desde TIA…"), L.T("Desde archivo…")]) switch
+        {
+            0 => true,
+            1 => false,
+            _ => null,
+        };
     }
 
     [RelayCommand]

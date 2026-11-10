@@ -109,6 +109,22 @@ Las señales IN no generan nada en el FB.
 - Muestra un resumen de diferencias y, al aplicar, lo del FB gana.
 - El FB queda guardado en el proyecto como «FB actual» del PLC y es la base de la siguiente generación, conservando la lógica cableada a mano.
 
+## TIA Portal directo
+
+Acordado en la issue #43. Solo en Windows y con TIA Portal V19; sin TIA, todo sigue funcionando con archivos.
+
+- **Leer FB LoS** y **Leer FB Tipo** (catálogo) preguntan si se lee «Desde TIA…» o «Desde archivo…». Desde TIA se elige el bloque en un árbol (PLC → carpetas → bloques) y se sigue como con un archivo.
+- **Proyecto de TIA**: salen los abiertos en algún TIA y se puede abrir un `.ap19`. Para leer, un proyecto que no está abierto se abre en un TIA sin ventana que se cierra al terminar. Antes de conectarse a un TIA abierto, la app avisa para que se guarde lo pendiente.
+- **Destino de TIA** de cada PLC: proyecto, PLC, carpeta y bloque. Se recuerda en el `.losproj` al leer o subir desde TIA; la próxima vez sale ya elegido y se puede cambiar.
+- **Subir a TIA** (ventana Generar, junto a «Guardar archivos»):
+  - Se elige el PLC o la carpeta. Si `User_LoS_Device_In_FB` ya existe en ese PLC, se sustituye donde está; si no, se crea en la carpeta elegida.
+  - Antes de subir se lee el FB de TIA. Si no coincide con el FB actual de la app (alguien lo cambió en TIA o no se ha leído nunca), no se sube y se pide «Leer FB LoS» primero.
+  - Casilla «Incluir los UDT de los devices» (marcada de inicio, se recuerda lo último elegido). Los UDT se suben antes que el FB.
+  - Tras subir se compila el FB y se enseñan errores y avisos. Nunca se carga nada al PLC.
+  - La app nunca guarda el proyecto de TIA. Si no estaba abierto, se abre en un TIA con ventana que queda abierto para revisarlo y guardarlo.
+  - Si TIA no deja escribir (bloque protegido, proyecto de solo lectura, bloque abierto en el editor), se enseña su mensaje.
+  - El FB tal como queda en TIA pasa a ser el FB actual. Si no compila, TIA no deja exportarlo y queda el generado.
+
 ## Datos de ejemplo
 
 `Datos Ejemplo/` contiene datos reales de fábrica, está en `.gitignore` y solo sirve como referencia de formato. Del FB de ejemplo se ignoran los segmentos 113-115, 117 y 119-121. Los tests usan datos inventados.

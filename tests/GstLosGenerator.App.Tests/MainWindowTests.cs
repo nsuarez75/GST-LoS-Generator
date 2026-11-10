@@ -26,11 +26,11 @@ public sealed class MainWindowTests : IDisposable
     }
 
     // Ventana con un proyecto ya importado, una location y una operación.
-    private async Task<(MainWindow Window, MainViewModel Main, FakeDialogs Dialogs)> Open(double width = 1400)
+    private async Task<(MainWindow Window, MainViewModel Main, FakeDialogs Dialogs)> Open(double width = 1400, ITia? tia = null)
     {
         var session = new Session(Path.Combine(_dir, "catalogo.loscat"));
         var dialogs = new FakeDialogs();
-        var main = new MainViewModel(session, dialogs, new AppSettings(), _ => { });
+        var main = new MainViewModel(session, dialogs, new AppSettings(), _ => { }, tia);
         var los = Path.Combine(_dir, "LX9.xlsx");
         using (var file = File.Create(los))
         {
@@ -411,6 +411,92 @@ public sealed class MainWindowTests : IDisposable
         Assert.Equal("ROBOT_NUEVO", catalog.Selected!.Name);
         main.UndoCommand.Execute(null);
         Assert.Equal("", main.Session.Catalog.Find("ROBOT_NUEVO")!.Fb);
+    }
+
+    [AvaloniaFact]
+    public async Task Leer_FB_LoS_desde_TIA_adapta_el_proyecto_y_recuerda_el_bloque()
+    {
+        var tia = new FakeTia();
+        var (_, main, dialogs) = await Open(tia: tia);
+        var plc = main.Session.Project.Plcs[0];
+        var xml = FbGenerator.Generate(plc, main.Session.Catalog, null, new GenerateOptions()).Xml;
+        tia.AddBlock("PLC_01", "LoS", Naming.FbName, xml);
+        dialogs.TiaPicker = async picker =>
+        {
+            await picker.Load();
+            Assert.Null(picker.Selected);
+            picker.Selected = picker.Nodes[0].Children.Single(n => n.Name == "LoS").Children.Single();
+            picker.Accept();
+        };
+
+        await main.ReadFbFor(plc);
+
+        Assert.Equal(["Desde TIA…", "Desde archivo…"], dialogs.PickLists[^1]);
+        Assert.Equal(xml, plc.CurrentFb);
+        Assert.Equal("TIA · PLC_01 · User_LoS_Device_In_FB", plc.CurrentFbFile);
+        Assert.Equal((FakeTia.ProjectPath, "PLC_01", "LoS", Naming.FbName), (plc.Tia!.Project, plc.Tia.Plc, plc.Tia.Group, plc.Tia.Block));
+        Assert.Equal(1, tia.Closed);
+
+        // La segunda vez sale ya elegido el bloque recordado.
+        var shown = dialogs.ChangeLists.Count;
+        dialogs.TiaPicker = null;
+        await main.ReadFbFor(plc);
+        Assert.Equal(shown + 1, dialogs.ChangeLists.Count);
+        Assert.Equal(2, tia.Closed);
+    }
+
+    [AvaloniaFact]
+    public async Task Subir_a_TIA_no_pisa_un_FB_cambiado_alli_a_mano()
+    {
+        var tia = new FakeTia();
+        var (_, main, dialogs) = await Open(tia: tia);
+        var plc = main.Session.Project.Plcs[0];
+        plc.CurrentFb = FbGenerator.Generate(plc, main.Session.Catalog, null, new GenerateOptions()).Xml;
+        tia.AddBlock("PLC_01", "LoS", Naming.FbName, "<Document><Cambiado /></Document>");
+        var generate = new GenerateViewModel(main, plc);
+
+        await generate.UploadCommand.ExecuteAsync(null);
+
+        Assert.Empty(tia.Imports);
+        Assert.Contains(dialogs.Messages, m => m.Contains("ha cambiado desde la última vez"));
+    }
+
+    [AvaloniaFact]
+    public async Task Subir_a_TIA_sube_UDT_y_FB_y_guarda_como_FB_actual_el_de_TIA()
+    {
+        var tia = new FakeTia();
+        var (_, main, dialogs) = await Open(tia: tia);
+        var plc = main.Session.Project.Plcs[0];
+        var generate = new GenerateViewModel(main, plc);
+        dialogs.TiaPicker = async picker =>
+        {
+            await picker.Load();
+            picker.Selected = picker.Nodes[0].Children.Single(n => n.Name == "LoS");
+            Assert.Contains("se crea en PLC_01 / LoS", picker.DestinationNote);
+            picker.Accept();
+        };
+
+        await generate.UploadCommand.ExecuteAsync(null);
+
+        var (destination, fb, udts) = Assert.Single(tia.Imports);
+        Assert.Equal(("PLC_01", "LoS", Naming.FbName), (destination.Plc, destination.Group, destination.Block));
+        Assert.Contains("User_LoS_Device_In_FB", fb);
+        Assert.Equal(["GSDML_Device11.udt", "GSDML_Device12.udt"], udts.Select(u => u.File));
+        Assert.Equal(tia.Blocks[FakeTia.Key("PLC_01", "LoS", Naming.FbName)], plc.CurrentFb);
+        Assert.Equal(Naming.FbName, plc.Tia!.Block);
+        Assert.Contains(dialogs.Messages, m => m.Contains("Subido a TIA") && m.Contains("UDT subido: GSDML_Device11"));
+
+        // La segunda vez va al bloque recordado; el FB de TIA es el último leído, así que se sube. Sin los UDT,
+        // y eso se recuerda.
+        dialogs.TiaPicker = null;
+        generate = new GenerateViewModel(main, plc) { Udts = false };
+        await generate.UploadCommand.ExecuteAsync(null);
+
+        Assert.Equal(2, tia.Imports.Count);
+        Assert.Empty(tia.Imports[1].Udts);
+        Assert.False(main.Settings.IncludeUdts);
+        Assert.False(new GenerateViewModel(main, plc).Udts);
+        Assert.Equal(2, tia.Closed);
     }
 
     [AvaloniaFact]
