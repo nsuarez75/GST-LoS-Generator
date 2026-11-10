@@ -32,6 +32,8 @@ public sealed class Plc
     // FB tal como está en TIA, leído con «Leer FB LoS». Es la base de la siguiente generación.
     public string? CurrentFb { get; set; }
     public string? CurrentFbFile { get; set; }
+    // Dónde está su FB en TIA (proyecto, PLC, carpeta y bloque); se recuerda al leerlo o subirlo desde TIA.
+    public TiaLink? Tia { get; set; }
 
     public Asset? FindAsset(string element) => Assets.FirstOrDefault(a => a.Element == element);
     public Device? FindDevice(int number) => Devices.FirstOrDefault(d => d.Number == number);
@@ -43,6 +45,18 @@ public sealed class Plc
     // Operaciones en el orden de sus segmentos en el FB.
     public List<Operation> OrderedOperations() =>
         CustomOperationOrder ? [.. Operations] : [.. Operations.OrderBy(o => o.Id, Fb.OperationIdComparer.Instance)];
+}
+
+public sealed class TiaLink
+{
+    // Ruta del proyecto de TIA (.ap19).
+    public string Project { get; set; } = "";
+    // Nombre del PLC en TIA, que no tiene por qué ser el de la LoS.
+    public string Plc { get; set; } = "";
+    // Carpetas de bloques separadas por «/»; vacío es la raíz.
+    public string Group { get; set; } = "";
+    public string Block { get; set; } = "";
+
 }
 
 public sealed class Device

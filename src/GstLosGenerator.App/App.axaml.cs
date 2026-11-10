@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Styling;
+using GstLosGenerator.App.Services;
 using GstLosGenerator.App.ViewModels;
 using GstLosGenerator.App.Views;
 using GstLosGenerator.Core;
@@ -25,7 +26,7 @@ public partial class App : Application
             ApplyTheme(settings.Theme);
             var window = new MainWindow();
             var session = new Session(CatalogPath);
-            var main = new MainViewModel(session, window, settings, SaveSettings);
+            var main = new MainViewModel(session, window, settings, SaveSettings, new TiaBridge());
             window.Attach(main);
             desktop.MainWindow = window;
             var language = L.Language;

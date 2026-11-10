@@ -122,6 +122,14 @@ public partial class MainWindow : Window, IDialogs
         return window.ShowDialog(this);
     }
 
+    public Task ShowTiaPicker(TiaPickerViewModel picker)
+    {
+        var window = new TiaPickerWindow { DataContext = picker };
+        picker.Done += window.Close;
+        window.Opened += async (_, _) => await picker.Load();
+        return window.ShowDialog(this);
+    }
+
     private static FilePickerFileType Type(FileFilter filter) =>
         new(filter.Name) { Patterns = ["*" + filter.Extension] };
 }

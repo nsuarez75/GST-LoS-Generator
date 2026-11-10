@@ -43,4 +43,7 @@ public interface IDialogs
     Task ShowCatalog(CatalogViewModel catalog);
 
     Task ShowGenerate(GenerateViewModel generate);
+
+    // Elegir proyecto, PLC y bloque de TIA; lo elegido queda en picker.Result.
+    Task ShowTiaPicker(TiaPickerViewModel picker);
 }

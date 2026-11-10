@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Openness de TIA Portal V19 solo funciona en .NET Framework 4.8: por eso este programa va aparte
+         y la app lo lleva dentro y lo lanza para leer y subir bloques -->
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <AssemblyName>GstLosGenerator.Tia</AssemblyName>
+    <RootNamespace>GstLosGenerator.Tia</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="Siemens.Engineering">
+      <!-- No se copia junto al programa: al arrancar se carga de la instalación de TIA V19 (ver Program.cs) -->
+      <HintPath>C:\Program Files\Siemens\Automation\Portal V19\PublicAPI\V19\Siemens.Engineering.dll</HintPath>
+      <Private>False</Private>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
+    </Reference>
+  </ItemGroup>
+
+</Project>

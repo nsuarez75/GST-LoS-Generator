@@ -30,4 +30,12 @@
     <InternalsVisibleTo Include="GstLosGenerator.App.Tests" />
   </ItemGroup>
 
+  <!-- El puente con TIA (.NET Framework 4.8) va dentro del ejecutable de Windows; la app lo saca a disco y lo lanza.
+       Fuera de Windows no se compila (necesita TIA Portal V19 instalado) y la app trabaja solo con archivos. -->
+  <ItemGroup Condition="'$(OS)' == 'Windows_NT'">
+    <ProjectReference Include="../GstLosGenerator.Tia/GstLosGenerator.Tia.csproj" ReferenceOutputAssembly="false"
+                      SkipGetTargetFrameworkProperties="true" SetTargetFramework="TargetFramework=net48" />
+    <EmbeddedResource Include="../GstLosGenerator.Tia/bin/$(Configuration)/net48/GstLosGenerator.Tia.exe" LogicalName="GstLosGenerator.Tia.exe" />
+  </ItemGroup>
+
 </Project>

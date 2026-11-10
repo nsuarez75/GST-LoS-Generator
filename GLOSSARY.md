@@ -6,7 +6,7 @@ Vocabulario del proyecto. La especificación completa está en `docs/especificac
 - **Proyecto**: conjunto de trabajo de la app; contiene PLCs y se alimenta de una LoS. Se guarda en un archivo `.losproj`.
 - **PLC**: autómata de la línea (en la LoS, `PLC06`, `PLC07`…). Cada uno tiene una hoja `PLCxx - OUT` y `PLCxx - IN` con sus devices.
 - **Device**: bloque de intercambio de un PLC con el IPC (`DEVICE 1`, `DEVICE 2`…), sacado de la hoja del PLC en la LoS. Suele haber 2 o 3 por PLC. En el PLC06 se llaman `Device_61`, `Device_62`… Cada device da lugar a un UDT (`GSDML_Device61`…) en formato de fuente externa `.udt`, igual para IN y OUT.
-- **FB del PLC**: bloque generado para un PLC, siempre llamado `User_LoS_Device_In_FB`. Hay uno por PLC y se elige de qué PLC se genera en cada momento. Se entrega como XML de Openness; la importación a TIA la hace otra app aparte (Openness exige .NET Framework 4.8).
+- **FB del PLC**: bloque generado para un PLC, siempre llamado `User_LoS_Device_In_FB`. Hay uno por PLC y se elige de qué PLC se genera en cada momento. Se entrega como XML de Openness o se sube directamente a TIA con «Subir a TIA».
 - **Asset**: cada elemento de la LoS (columna `Element`, p. ej. `LX9_01_1000FIX01_01_MOVEHR`) con su tipo y sus variables.
 - **Tipo** (de asset): la columna `Template` de la LoS (p. ej. `OP_UNXLOAD`, `CE_CELL`). Cada tipo tiene sus variables y se corresponde con un FB y un UDT de TIA Portal mediante una equivalencia.
 - **Catálogo de tipos**: lista de tipos con sus variables y equivalencias. Es común a todos los proyectos.
@@ -22,4 +22,7 @@ Vocabulario del proyecto. La especificación completa está en `docs/especificac
 - **FB actual**: el FB de un PLC tal como está en TIA, exportado y leído con «Leer FB LoS». Es la base sobre la que se genera para no perder lo programado a mano.
 - **Variable movida**: variable que se ha arrastrado de un asset a otro en el árbol. La app recuerda el movimiento; si una LoS nueva la vuelve a traer en su asset de origen, pregunta si se deja movida o vuelve a donde dice la LoS.
 - **Leer FB LoS**: acción de la barra superior que lee el FB del PLC exportado (`User_LoS_Device_In_FB`) y adapta la configuración de la app a lo que hay en él (operaciones, asignaciones, equivalencias). Las operaciones y los assets que el FB tiene y la app no, los añade.
+- **Desde TIA / Desde archivo**: las dos formas de leer un FB («Leer FB LoS», «Leer FB Tipo»): eligiéndolo en el árbol del proyecto de TIA o abriendo un XML exportado.
+- **Destino de TIA**: dónde está el FB de un PLC en TIA (proyecto `.ap19`, PLC, carpeta y bloque). Se recuerda en el proyecto al leer o subir desde TIA. El PLC de TIA no tiene por qué llamarse como el de la LoS.
+- **Subir a TIA**: acción de la ventana Generar que, en lugar de guardar archivos, sube los UDT y el FB al proyecto de TIA y compila. Solo sube si el FB que hay en TIA es el último leído. El proyecto de TIA lo guarda el usuario.
 - **Leer FB Tipo**: acción del catálogo que lee un FB exportado para aprender la equivalencia y la interfaz de un solo tipo (FB que se llama, UDT, pines). No cambia nada del proyecto. No confundir con «Leer FB LoS».
