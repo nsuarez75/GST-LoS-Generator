@@ -10,6 +10,11 @@
     <PackageReference Include="ClosedXML" Version="0.105.0" />
   </ItemGroup>
 
+  <!-- Modelos de TIA-Connector (sin Openness): el árbol que se lee de TIA se pasa al modelo de la app -->
+  <ItemGroup>
+    <ProjectReference Include="../../external/TIA-Connector/src/TiaConnector.Contracts/TiaConnector.Contracts.csproj" />
+  </ItemGroup>
+
   <ItemGroup>
     <InternalsVisibleTo Include="GstLosGenerator.Tests" />
   </ItemGroup>

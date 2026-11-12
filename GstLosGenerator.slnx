@@ -2,7 +2,6 @@
   <Folder Name="/src/">
     <Project Path="src/GstLosGenerator.App/GstLosGenerator.App.csproj" />
     <Project Path="src/GstLosGenerator.Core/GstLosGenerator.Core.csproj" />
-    <Project Path="src/GstLosGenerator.Tia/GstLosGenerator.Tia.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/GstLosGenerator.App.Tests/GstLosGenerator.App.Tests.csproj" />

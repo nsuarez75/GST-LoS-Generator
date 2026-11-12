@@ -26,7 +26,7 @@ public partial class App : Application
             ApplyTheme(settings.Theme);
             var window = new MainWindow();
             var session = new Session(CatalogPath);
-            var main = new MainViewModel(session, window, settings, SaveSettings, new TiaBridge());
+            var main = new MainViewModel(session, window, settings, SaveSettings, new TiaConnection());
             window.Attach(main);
             desktop.MainWindow = window;
             var language = L.Language;
