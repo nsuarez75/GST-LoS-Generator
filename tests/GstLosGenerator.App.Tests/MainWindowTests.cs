@@ -562,13 +562,13 @@ public sealed class MainWindowTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task About_Always_ShowsAuthor()
+    public async Task About_Always_ShowsNameVersionAndAuthor()
     {
         var (_, main, dialogs) = await Open();
 
         await main.AboutCommand.ExecuteAsync(null);
 
-        Assert.Contains("Acerca de: Creado por Ignacio Suarez. https://github.com/nsuarez75/GST-LoS-Generator", dialogs.Messages);
+        Assert.Contains($"Acerca de: GST LoS Generator, versión {MainViewModel.CurrentVersion.ToString(3)}.\nCreado por Ignacio Suarez (Alomatek). https://github.com/nsuarez75/GST-LoS-Generator", dialogs.Messages);
     }
 
     [AvaloniaFact]

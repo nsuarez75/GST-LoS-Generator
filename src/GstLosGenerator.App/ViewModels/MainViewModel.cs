@@ -568,7 +568,9 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private Task About() => Dialogs.About(L.T("Acerca de"), L.T("Creado por Ignacio Suarez."), UpdateCheck.RepositoryUrl);
+    private Task About() => Dialogs.About(L.T("Acerca de"),
+        L.T("{0}, versión {1}.\nCreado por Ignacio Suarez (Alomatek).", "GST LoS Generator", CurrentVersion.ToString(3)),
+        UpdateCheck.RepositoryUrl);
 
     // ---------------------------------------------------------------- versión nueva
 

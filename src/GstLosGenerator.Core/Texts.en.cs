@@ -88,7 +88,7 @@ public static partial class L
         ["Oscuro"] = "Dark",
         ["Idioma"] = "Language",
         ["Acerca de"] = "About",
-        ["Creado por Ignacio Suarez."] = "Created by Ignacio Suarez.",
+        ["{0}, versión {1}.\nCreado por Ignacio Suarez (Alomatek)."] = "{0}, version {1}.\nMade by Ignacio Suarez (Alomatek).",
         ["Proyecto"] = "Project",
         ["{0} PLC"] = "{0} PLC",
         ["Devices"] = "Devices",
