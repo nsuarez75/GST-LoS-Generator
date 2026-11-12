@@ -1,66 +1,32 @@
 using GstLosGenerator.Core;
 using GstLosGenerator.Core.Fb;
 using GstLosGenerator.Core.Tia;
+using TiaConnector.Contracts;
 
 namespace GstLosGenerator.Tests;
 
 public class TiaTests
 {
     [Fact]
-    public void El_arbol_se_monta_con_lo_que_dice_el_puente()
+    public void El_arbol_de_TIA_pasa_al_de_la_app_con_la_ruta_de_cada_carpeta()
     {
-        var tree = new TiaTree();
-        foreach (var line in new[]
-                 {
-                     "PLC PLC_01",
-                     "BLOCK PLC_01||Main|OB",
-                     "GROUP PLC_01|LoS",
-                     "BLOCK PLC_01|LoS|User_LoS_Device_In_FB|FB",
-                     "GROUP PLC_01|LoS/Tipos",
-                     "BLOCK PLC_01|LoS/Tipos|LoS_OP_MOVE_CNV|FB",
-                     "PROGRESS Abriendo…",
-                 })
+        var tipos = new BlockFolder { Name = "Tipos", Blocks = { new BlockInfo { Name = "LoS_OP_MOVE_CNV", Type = "FB" } } };
+        var los = new BlockFolder
         {
-            var (key, text) = TiaProtocol.Split(line);
-            TiaProtocol.ApplyTree(tree, key, text);
-        }
+            Name = "LoS",
+            Folders = { tipos },
+            Blocks = { new BlockInfo { Name = "User_LoS_Device_In_FB", Type = "FB" } },
+        };
+        var root = new BlockFolder { Name = "Bloques de programa", Folders = { los }, Blocks = { new BlockInfo { Name = "Main", Type = "OB" } } };
+
+        var tree = TiaTree.From([new PlcTree { Name = "PLC_01", Root = root }]);
 
         Assert.Equal(["PLC_01"], tree.Plcs);
         Assert.Equal(["LoS", "LoS/Tipos"], tree.Groups.Select(g => g.Path));
+        Assert.Equal(new TiaBlock("PLC_01", "", "Main", "OB"), tree.FindBlock("PLC_01", "Main"));
         Assert.Equal(new TiaBlock("PLC_01", "LoS", "User_LoS_Device_In_FB", "FB"), tree.FindBlock("PLC_01", "User_LoS_Device_In_FB"));
+        Assert.Equal(new TiaBlock("PLC_01", "LoS/Tipos", "LoS_OP_MOVE_CNV", "FB"), tree.FindBlock("PLC_01", "LoS_OP_MOVE_CNV"));
         Assert.Null(tree.FindBlock("PLC_02", "User_LoS_Device_In_FB"));
-    }
-
-    [Fact]
-    public void El_resultado_de_subir_recoge_UDT_compilacion_y_mensajes()
-    {
-        var result = new TiaImportResult();
-        foreach (var line in new[]
-                 {
-                     "UDT GSDML_Device11",
-                     "PLACED LoS|User_LoS_Device_In_FB",
-                     "COMPILE Warning|0|2",
-                     "MSG Warning|User_LoS_Device_In_FB|Variable sin usar | aviso",
-                     "EXPORTED C:\\tmp\\actual.xml",
-                 })
-        {
-            var (key, text) = TiaProtocol.Split(line);
-            TiaProtocol.ApplyImport(result, key, text);
-        }
-
-        Assert.Equal(["GSDML_Device11"], result.Udts);
-        Assert.Equal(("LoS", "User_LoS_Device_In_FB"), (result.Group, result.Block));
-        Assert.Equal(("Warning", 0, 2), (result.CompileState, result.Errors, result.Warnings));
-        Assert.Equal("Warning · User_LoS_Device_In_FB: Variable sin usar | aviso", Assert.Single(result.Messages));
-        Assert.Equal("C:\\tmp\\actual.xml", result.ExportedFile);
-    }
-
-    [Fact]
-    public void Las_ordenes_van_separadas_por_tabuladores_y_no_admiten_saltos()
-    {
-        Assert.Equal("export\tC:\\a b\\L.ap19\tPLC_01\t\tFB", TiaProtocol.Command("export", "C:\\a b\\L.ap19", "PLC_01", "", "FB"));
-        Assert.Throws<ArgumentException>(() => TiaProtocol.Command("tree", "a\nb"));
-        Assert.Equal(("DONE", ""), TiaProtocol.Split("DONE"));
     }
 
     [Fact]

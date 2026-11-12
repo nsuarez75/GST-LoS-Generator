@@ -9,7 +9,7 @@ App de escritorio en .NET 10 con Avalonia que, a partir de una LoS (Excel de se�
 - El FB `User_LoS_Device_In_FB`, como XML de Openness.
 - Un UDT `GSDML_DeviceNN` por device, en formato de fuente externa `.udt`.
 
-La importación a TIA Portal queda fuera: la hará otra app con Openness, que exige .NET Framework 4.8.
+Además, con TIA Portal V19 instalado, lee el FB del proyecto de TIA y sube el FB y los UDT (ver README). Solo Windows.
 
 ## Interfaz
 

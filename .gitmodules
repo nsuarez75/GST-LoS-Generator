@@ -1,0 +1,3 @@
+[submodule "external/TIA-Connector"]
+	path = external/TIA-Connector
+	url = https://github.com/nsuarez75/TIA-Connector.git
