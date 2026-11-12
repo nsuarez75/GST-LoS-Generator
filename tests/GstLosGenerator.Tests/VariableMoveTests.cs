@@ -20,7 +20,7 @@ public class VariableMoveTests
     private static List<string> Names(Plc plc, string element) => plc.FindAsset(element)!.Variables.Select(v => v.Name).ToList();
 
     [Fact]
-    public void Mover_una_variable_la_lleva_con_sus_datos_y_apunta_el_movimiento()
+    public void Move_Variable_CarriesDataAndRecordsMove()
     {
         var (_, catalog, plc) = Moved();
 
@@ -33,7 +33,7 @@ public class VariableMoveTests
     }
 
     [Fact]
-    public void Si_el_destino_ya_tiene_la_variable_no_se_puede_mover()
+    public void CannotMove_TargetHasVariable_ReturnsReason()
     {
         var (_, _, plc) = Moved();
         var robot = plc.FindAsset(Robot)!;
@@ -43,7 +43,7 @@ public class VariableMoveTests
     }
 
     [Fact]
-    public void Devolver_la_variable_a_su_origen_borra_el_movimiento()
+    public void Move_BackToOrigin_ForgetsMove()
     {
         var (_, catalog, plc) = Moved();
         var fixture = plc.FindAsset(Fixture)!;
@@ -54,7 +54,7 @@ public class VariableMoveTests
     }
 
     [Fact]
-    public void Mover_dos_veces_apunta_el_origen_de_la_LoS_y_el_destino_final()
+    public void Move_Twice_KeepsLosOriginAndFinalTarget()
     {
         var (_, catalog, plc) = Moved();
         var fixture = plc.FindAsset(Fixture)!;
@@ -66,7 +66,7 @@ public class VariableMoveTests
     }
 
     [Fact]
-    public void Al_reimportar_se_pregunta_y_si_se_mantiene_la_variable_sigue_movida()
+    public void ImportPlan_MovedVariableKept_StaysMoved()
     {
         var (project, catalog, plc) = Moved();
         plc.FindAsset(Fixture)!.Variables.Single(v => v.Name == "Torque").Disabled = true;
@@ -84,7 +84,7 @@ public class VariableMoveTests
     }
 
     [Fact]
-    public void Al_reimportar_si_no_se_mantiene_manda_la_LoS_y_se_olvida_el_movimiento()
+    public void ImportPlan_MovedVariableNotKept_FollowsLos()
     {
         var (project, catalog, plc) = Moved();
 
@@ -100,7 +100,7 @@ public class VariableMoveTests
     }
 
     [Fact]
-    public void Si_la_LoS_ya_no_trae_la_variable_en_el_origen_el_movimiento_se_olvida()
+    public void ImportPlan_VariableGoneFromLos_ForgetsMove()
     {
         var (project, catalog, plc) = Moved();
         var signals = FakeLos.DefaultSignals().Where(s => s.Signal != "Torque").ToList();

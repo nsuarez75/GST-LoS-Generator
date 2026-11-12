@@ -39,7 +39,7 @@ public class FbTests
     private static List<string> Titles(string xml) => FbDocument.Parse(xml).Segments.Select(s => s.Title).ToList();
 
     [Fact]
-    public void Desde_cero_el_FB_lleva_el_esqueleto_en_orden()
+    public void Generate_FromScratch_WritesSkeletonInOrder()
     {
         var (_, catalog, plc) = Prepared();
 
@@ -66,7 +66,7 @@ public class FbTests
     }
 
     [Fact]
-    public void La_estatica_lleva_devices_variables_instancias_y_operaciones()
+    public void Generate_Static_DeclaresDevicesVariablesAndOperations()
     {
         var (_, catalog, plc) = Prepared();
 
@@ -84,7 +84,7 @@ public class FbTests
     }
 
     [Fact]
-    public void Los_ID_son_unicos_y_los_UId_no_se_repiten_en_cada_segmento()
+    public void Generate_Ids_UniquePerNetwork()
     {
         var (_, catalog, plc) = Prepared();
         var first = Fresh(plc, catalog);
@@ -115,7 +115,7 @@ public class FbTests
     }
 
     [Fact]
-    public void Operacion_en_STL_con_mascara_senales_agrupadas_y_alwaysFalse()
+    public void Generate_OperationNetwork_WritesStlWithMask()
     {
         var (_, catalog, plc) = Prepared();
 
@@ -140,7 +140,7 @@ public class FbTests
     }
 
     [Fact]
-    public void Struct_TO_DEVICE_por_regiones_y_SWAP_de_todos_los_enteros()
+    public void Generate_StructToDevice_RegionsAndSwaps()
     {
         var (_, catalog, plc) = Prepared();
         var xml = Fresh(plc, catalog);
@@ -166,7 +166,7 @@ public class FbTests
     }
 
     [Fact]
-    public void Un_tipo_sin_FB_escribe_sus_variables_desde_el_origen_en_General()
+    public void Generate_TypeWithoutFb_WritesVariablesFromSource()
     {
         var (_, catalog, plc) = Prepared();
         var type = catalog.Find("CE_PLC")!;
@@ -195,7 +195,7 @@ public class FbTests
     }
 
     [Fact]
-    public void La_linea_de_un_tipo_sin_FB_se_anade_a_General_aunque_el_asset_no_este_marcado()
+    public void Generate_TypeWithoutFbUnmarked_StillAddsLine()
     {
         var (_, catalog, plc) = Prepared();
         var type = catalog.Find("CE_PLC")!;
@@ -221,7 +221,7 @@ public class FbTests
     }
 
     [Fact]
-    public void Una_senal_desactivada_se_escribe_comentada_y_no_se_vuelve_a_anadir()
+    public void Generate_DisabledSignal_WritesCommentedOnce()
     {
         var (_, catalog, plc) = Prepared();
         var robot = plc.FindAsset("LX9_01_1000FIX01_01_MOVEHR_01_R")!;
@@ -246,14 +246,14 @@ public class FbTests
     [InlineData("#LifeBit", "#LifeBit")]
     [InlineData("#Device_11.\"Bool_011_o(000)_04\"", "#Device_11.\"Bool_011_o(000)_04\"")]
     [InlineData("Info_DB.stat.\"Firma 1\"", "\"Info_DB\".stat.\"Firma 1\"")]
-    public void Una_ruta_SCL_se_escribe_como_en_TIA(string text, string expected) => Assert.Equal(expected, SclPath.Parse(text)!.Text());
+    public void ToString_SclPath_FormatsLikeTia(string text, string expected) => Assert.Equal(expected, SclPath.Parse(text)!.Text());
 
     [Theory]
     [InlineData("#LifeBit", false, new[] { "LifeBit" })]
     [InlineData("#Device_11.\"Bool_011_o(000)_04\"", false, new[] { "Device_11", "Bool_011_o(000)_04" })]
     [InlineData("\"Info_DB\".stat.signature", true, new[] { "Info_DB", "stat", "signature" })]
     [InlineData("alwaysTrue", true, new[] { "alwaysTrue" })]
-    public void Una_ruta_SCL_se_lee_por_componentes(string text, bool global, string[] components)
+    public void Parse_SclPath_ReadsComponents(string text, bool global, string[] components)
     {
         var path = SclPath.Parse(text)!;
         Assert.Equal(global, path.Global);
@@ -267,10 +267,10 @@ public class FbTests
     [InlineData("#a[1]")]
     [InlineData("\"DB.a")]
     [InlineData("#a + 1")]
-    public void Una_ruta_SCL_no_valida_no_se_lee(string text) => Assert.Null(SclPath.Parse(text));
+    public void Parse_InvalidSclPath_ReturnsNull(string text) => Assert.Null(SclPath.Parse(text));
 
     [Fact]
-    public void Un_asset_sin_equivalencia_no_se_genera_y_se_avisa()
+    public void Generate_AssetWithoutEquivalence_SkipsAndWarns()
     {
         var (_, catalog, plc) = Prepared();
         catalog.Find("AS_ROBOT")!.Udt = "";
@@ -283,7 +283,7 @@ public class FbTests
     }
 
     [Fact]
-    public void Regenerar_conserva_lo_manual_y_solo_reescribe_lo_marcado()
+    public void Generate_OverCurrentFb_KeepsManualRewritesMarked()
     {
         var (_, catalog, plc) = Prepared();
         var current = AddManualSegment(Fresh(plc, catalog));
@@ -305,7 +305,7 @@ public class FbTests
     }
 
     [Fact]
-    public void Regenerar_una_llamada_conserva_la_logica_cableada_a_mano()
+    public void Generate_CallRewritten_KeepsManualWiring()
     {
         var (_, catalog, plc) = Prepared();
         var robot = catalog.Find("AS_ROBOT")!;
@@ -330,7 +330,7 @@ public class FbTests
     }
 
     [Fact]
-    public void Cada_pin_declarado_en_una_llamada_tiene_una_conexion()
+    public void Generate_Call_ConnectsEveryPin()
     {
         var (_, catalog, plc) = Prepared();
         var robot = catalog.Find("AS_ROBOT")!;
@@ -360,7 +360,7 @@ public class FbTests
     }
 
     [Fact]
-    public void Si_el_FB_nuevo_pierde_un_pin_cableado_no_se_regenera_sin_confirmar()
+    public void Generate_LostWiredPin_NeedsConfirmation()
     {
         var (_, catalog, plc) = Prepared();
         var robot = catalog.Find("AS_ROBOT")!;
@@ -382,7 +382,7 @@ public class FbTests
     }
 
     [Fact]
-    public void Struct_TO_DEVICE_conserva_las_regiones_hechas_a_mano()
+    public void Generate_StructToDevice_KeepsManualRegions()
     {
         var (_, catalog, plc) = Prepared();
         var fresh = Fresh(plc, catalog);
@@ -413,7 +413,7 @@ public class FbTests
     }
 
     [Fact]
-    public void Leer_FB_recupera_operaciones_locations_y_asignaciones()
+    public void SyncPlan_Fb_RecoversOperationsAndAssignments()
     {
         var (project, catalog, plc) = Prepared();
         var xml = Fresh(plc, catalog);
@@ -437,7 +437,7 @@ public class FbTests
     }
 
     [Fact]
-    public void Leer_FB_crea_los_assets_nuevos_con_su_tipo_y_su_operacion()
+    public void SyncPlan_NewAssets_CreatesWithTypeAndOperation()
     {
         var (project, catalog, plc) = Prepared();
         // Asset añadido a mano en TIA que la app no tiene, con un UDT distinto del de su tipo.
@@ -466,7 +466,7 @@ public class FbTests
     }
 
     [Fact]
-    public void Leer_FB_no_crea_un_asset_si_ningun_tipo_usa_su_FB()
+    public void SyncPlan_UnknownFb_SkipsAsset()
     {
         var (project, catalog, plc) = Prepared();
         var xml = Fresh(plc, catalog);
@@ -483,7 +483,7 @@ public class FbTests
     }
 
     [Fact]
-    public void Leer_FB_aprende_la_equivalencia_de_un_tipo_que_no_la_tiene()
+    public void SyncPlan_TypeWithoutEquivalence_LearnsIt()
     {
         var (_, catalog, plc) = Prepared();
         var xml = Fresh(plc, catalog);
@@ -499,7 +499,7 @@ public class FbTests
     }
 
     [Fact]
-    public void Con_comentario_el_titulo_de_la_operacion_lo_lleva_en_vez_de_las_locations()
+    public void OperationTitle_WithComment_UsesComment()
     {
         var (_, catalog, plc) = Prepared();
         var operation = plc.FindOperation("110")!;
@@ -511,7 +511,7 @@ public class FbTests
     }
 
     [Fact]
-    public void El_comentario_cambia_el_titulo_del_FB_actual_sin_marcar_operaciones()
+    public void Generate_CommentChanged_UpdatesTitleOnly()
     {
         var (_, catalog, plc) = Prepared();
         // Cambio a mano en TIA que no se debe perder.
@@ -525,7 +525,7 @@ public class FbTests
     }
 
     [Fact]
-    public void Leer_FB_recupera_el_comentario_y_las_locations_por_su_numero()
+    public void SyncPlan_Comment_RecoversCommentAndLocations()
     {
         var (project, catalog, plc) = Prepared();
         plc.FindOperation("110")!.Comment = "Carga de piezas";
@@ -561,7 +561,7 @@ public class FbTests
     }
 
     [Fact]
-    public void Leer_FB_toma_el_titulo_del_idioma_editado_en_TIA()
+    public void SyncPlan_EditedLanguage_UsesItsTitle()
     {
         var (project, catalog, plc) = Prepared();
         var xml = RetitleOperation(Fresh(plc, catalog), "en-US", "Operation 110: Carga de piezas");
@@ -574,7 +574,7 @@ public class FbTests
     }
 
     [Fact]
-    public void Si_cada_idioma_tiene_un_titulo_distinto_vale_el_ingles()
+    public void SyncPlan_DifferentTitles_UsesEnglish()
     {
         var (_, catalog, plc) = Prepared();
         var xml = RetitleOperation(Fresh(plc, catalog), "es-ES", "Operation 110: Texto es");
@@ -585,7 +585,7 @@ public class FbTests
     }
 
     [Fact]
-    public void Leer_FB_toma_como_comentario_un_texto_tras_las_locations_que_no_es_una_location()
+    public void SyncPlan_TextAfterLocations_ReadsAsComment()
     {
         var (project, catalog, plc) = Prepared();
         var xml = RetitleOperation(Fresh(plc, catalog), null, "Operation 110 :1000+FIX01 Virtual, 1000+FIX02");
@@ -601,7 +601,7 @@ public class FbTests
     }
 
     [Fact]
-    public void Leer_FB_sin_comentario_deja_el_comentario_vacio()
+    public void SyncPlan_NoComment_LeavesEmpty()
     {
         var (project, catalog, plc) = Prepared();
         var xml = Fresh(plc, catalog);
@@ -626,7 +626,7 @@ public class FbTests
         FbDocument.Parse(xml).Segments.Where(s => s.Key?.StartsWith("op:", StringComparison.Ordinal) == true).Select(s => s.Key![3..]).ToList();
 
     [Fact]
-    public void Sin_orden_propio_las_operaciones_van_por_numero()
+    public void Generate_DefaultOrder_SortsByNumber()
     {
         var (_, catalog, plc) = ThreeOperations();
 
@@ -634,7 +634,7 @@ public class FbTests
     }
 
     [Fact]
-    public void Con_orden_propio_las_operaciones_van_en_el_orden_de_la_lista()
+    public void Generate_CustomOrder_UsesListOrder()
     {
         var (_, catalog, plc) = ThreeOperations();
         plc.CustomOperationOrder = true;
@@ -643,7 +643,7 @@ public class FbTests
     }
 
     [Fact]
-    public void El_orden_propio_recoloca_las_operaciones_del_FB_actual_sin_mover_lo_demas()
+    public void Generate_CustomOrderOverCurrentFb_MovesOnlyOperations()
     {
         var (_, catalog, plc) = ThreeOperations();
         var doc = FbDocument.Parse(Fresh(plc, catalog));
@@ -663,7 +663,7 @@ public class FbTests
     }
 
     [Fact]
-    public void Leer_FB_toma_el_orden_de_las_operaciones_del_FB()
+    public void SyncPlan_OperationOrder_TakesFbOrder()
     {
         var (_, catalog, plc) = ThreeOperations();
         plc.Operations = [plc.FindOperation("120")!, plc.FindOperation("90")!, plc.FindOperation("110")!];
@@ -681,7 +681,7 @@ public class FbTests
     }
 
     [Fact]
-    public void Leer_FB_con_las_operaciones_por_numero_no_cambia_el_orden()
+    public void SyncPlan_OrderedByNumber_KeepsOrder()
     {
         var (_, catalog, plc) = ThreeOperations();
         var xml = Fresh(plc, catalog);
@@ -702,7 +702,7 @@ public class FbTests
     }
 
     [Fact]
-    public void Aprender_un_tipo_de_un_FB_que_lo_llama_rellena_equivalencia_e_interfaz()
+    public void Learn_CallingFb_FillsEquivalenceAndInterface()
     {
         var (catalog, xml) = CallerFb();
 
@@ -720,7 +720,7 @@ public class FbTests
     }
 
     [Fact]
-    public void Aprender_de_una_llamada_sin_titulo_de_asset_encuentra_el_UDT_por_la_variable()
+    public void Learn_CallWithoutAssetTitle_FindsUdtByVariable()
     {
         var (_, xml) = CallerFb();
         xml = xml.Replace("LX9_01_1000FIX01_01_MOVEHR_01_R [LoS_AS_ROBOT]", "Robot de carga");
@@ -731,7 +731,7 @@ public class FbTests
     }
 
     [Fact]
-    public void Aprender_del_propio_FB_del_tipo_toma_su_interfaz()
+    public void Learn_TypeOwnFb_TakesInterface()
     {
         var doc = FbDocument.CreateEmpty();
         doc.Block.Element("AttributeList")!.Element("Name")!.Value = "LoS_AS_ROBOT";

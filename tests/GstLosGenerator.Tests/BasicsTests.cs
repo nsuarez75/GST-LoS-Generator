@@ -13,10 +13,10 @@ public class BasicsTests
     [InlineData("Float", "Real")]
     [InlineData("String", "Array[1..20] of Char")]
     [InlineData("String120", "Array[1..120] of Char")]
-    public void Tipos_de_dato_de_la_LoS_a_TIA(string los, string tia) => Assert.Equal(tia, DataTypes.ToTia(los));
+    public void TiaType_LosType_ReturnsTiaType(string los, string tia) => Assert.Equal(tia, DataTypes.ToTia(los));
 
     [Fact]
-    public void Nombres_de_device_instancia_y_regiones()
+    public void Naming_DeviceAndInstance_ReturnsNames()
     {
         Assert.Equal("Device_61", Naming.DeviceName(6, 1));
         Assert.Equal("GSDML_Device62", Naming.DeviceUdt(6, 2));
@@ -27,7 +27,7 @@ public class BasicsTests
     }
 
     [Fact]
-    public void La_mascara_lleva_un_bit_por_referencia()
+    public void Mask_References_OneBitEach()
     {
         var location = new OperationLocation();
         Assert.Equal(0, location.Mask);
@@ -38,7 +38,7 @@ public class BasicsTests
     }
 
     [Fact]
-    public void Arbol_de_assets_celda_operacion_y_subassets()
+    public void AssetTree_ImportedAssets_BuildsHierarchy()
     {
         var (project, _) = FakeLos.ImportedProject();
         var tree = new AssetTree(project.Plcs[0].Assets);
@@ -51,7 +51,7 @@ public class BasicsTests
     }
 
     [Fact]
-    public void El_UDT_del_device_sigue_el_formato_de_fuente_externa()
+    public void Write_DeviceUdt_UsesExternalSourceFormat()
     {
         var (project, _) = FakeLos.ImportedProject();
         var plc = project.Plcs[0];
@@ -68,7 +68,7 @@ public class BasicsTests
     }
 
     [Fact]
-    public void Proyecto_y_catalogo_se_guardan_y_se_vuelven_a_abrir_igual()
+    public void ToJson_ProjectAndCatalog_RoundTrip()
     {
         var (project, catalog) = FakeLos.ImportedProject();
         project.Plcs[0].Operations.Add(new Operation

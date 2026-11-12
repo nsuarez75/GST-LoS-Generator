@@ -8,7 +8,7 @@ namespace GstLosGenerator.Tests;
 public class TiaTests
 {
     [Fact]
-    public void El_arbol_de_TIA_pasa_al_de_la_app_con_la_ruta_de_cada_carpeta()
+    public void From_PlcTree_BuildsFolderPaths()
     {
         var tipos = new BlockFolder { Name = "Tipos", Blocks = { new BlockInfo { Name = "LoS_OP_MOVE_CNV", Type = "FB" } } };
         var los = new BlockFolder
@@ -30,7 +30,7 @@ public class TiaTests
     }
 
     [Fact]
-    public void El_mismo_FB_exportado_otra_vez_cuenta_como_el_mismo()
+    public void Same_ReexportedFb_ReturnsTrue()
     {
         const string first = """
             <?xml version="1.0" encoding="utf-8"?>
@@ -59,7 +59,7 @@ public class TiaTests
     }
 
     [Fact]
-    public void El_destino_de_TIA_se_guarda_con_el_proyecto()
+    public void SaveProject_TiaLink_RoundTrips()
     {
         var path = Path.Combine(Directory.CreateTempSubdirectory("gst-tia-").FullName, "p.losproj");
         var project = new Project { Name = "P" };

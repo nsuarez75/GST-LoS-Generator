@@ -5,7 +5,7 @@ namespace GstLosGenerator.Tests;
 public class LosTests
 {
     [Fact]
-    public void Lee_los_plcs_assets_y_variables_en_el_orden_de_la_LoS()
+    public void Read_Los_ReturnsPlcsAssetsAndVariablesInOrder()
     {
         var data = FakeLos.Read();
 
@@ -27,7 +27,7 @@ public class LosTests
     }
 
     [Fact]
-    public void Los_devices_salen_de_la_hoja_OUT_con_el_tipo_completo_en_los_String()
+    public void Read_OutSheet_ReturnsDevicesWithFullTypes()
     {
         var plc = FakeLos.Read().Plcs[0];
 
@@ -41,7 +41,7 @@ public class LosTests
     }
 
     [Fact]
-    public void Sin_hoja_LoS_avisa_con_un_error_claro()
+    public void Read_NoLosSheet_ThrowsClearError()
     {
         using var empty = new ClosedXML.Excel.XLWorkbook();
         empty.AddWorksheet("Otra");
@@ -54,7 +54,7 @@ public class LosTests
     }
 
     [Fact]
-    public void Importar_en_un_proyecto_vacio_crea_plcs_y_tipos_pendientes_de_equivalencia()
+    public void ImportPlan_EmptyProject_CreatesPlcsAndPendingTypes()
     {
         var project = new Project();
         var catalog = new Catalog();
@@ -72,7 +72,7 @@ public class LosTests
     }
 
     [Fact]
-    public void Una_LoS_nueva_conserva_lo_hecho_a_mano_y_marca_lo_que_desaparece()
+    public void ImportPlan_NewLos_KeepsManualAndFlagsRemoved()
     {
         var (project, catalog) = FakeLos.ImportedProject();
         var plc = project.Plcs[0];
@@ -107,7 +107,7 @@ public class LosTests
     }
 
     [Fact]
-    public void Un_asset_manual_que_trae_la_LoS_pasa_a_ser_de_la_LoS()
+    public void ImportPlan_ManualAssetInLos_BecomesLosAsset()
     {
         var project = new Project();
         project.Plcs.Add(new Plc { Name = "PLC02", Number = 2 });

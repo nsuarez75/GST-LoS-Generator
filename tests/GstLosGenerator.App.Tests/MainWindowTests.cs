@@ -82,7 +82,7 @@ public sealed class MainWindowTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task Importar_la_LoS_crea_el_arbol_del_proyecto()
+    public async Task ImportLos_Workbook_BuildsProjectTree()
     {
         var (window, main, dialogs) = await Open();
 
@@ -98,7 +98,7 @@ public sealed class MainWindowTests : IDisposable
     [InlineData(AppSettings.ThemeLight, L.Spanish, 1400)]
     [InlineData(AppSettings.ThemeDark, L.English, 1400)]
     [InlineData(AppSettings.ThemeLight, L.Spanish, 900)]
-    public async Task Todas_las_pantallas_se_dibujan(string theme, string language, double width)
+    public async Task Render_AllScreens_DrawsWithoutErrors(string theme, string language, double width)
     {
         L.Language = language;
         App.ApplyTheme(theme);
@@ -130,7 +130,7 @@ public sealed class MainWindowTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task Cambiar_un_tipo_en_el_arbol_se_puede_deshacer()
+    public async Task ChangeType_InTree_Undoes()
     {
         var (_, main, _) = await Open();
         main.SelectedNode = main.FindNode(NavKind.Assets, "PLC01");
@@ -149,7 +149,7 @@ public sealed class MainWindowTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task El_desplegable_de_operacion_enseña_el_comentario_y_cambia_la_operacion()
+    public async Task OperationPicker_Comment_ShowsAndChangesOperation()
     {
         var (window, main, _) = await Open();
         var plc = main.Session.Project.Plcs[0];
@@ -176,7 +176,7 @@ public sealed class MainWindowTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task Al_volver_a_assets_se_conserva_lo_plegado_y_lo_seleccionado()
+    public async Task Assets_ReturnToView_KeepsExpandedAndSelected()
     {
         var (_, main, _) = await Open();
         main.SelectedNode = main.FindNode(NavKind.Assets, "PLC01");
@@ -213,7 +213,7 @@ public sealed class MainWindowTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task El_buscador_filtra_por_direccion_y_abre_el_camino()
+    public async Task Filter_Address_ShowsMatchAndExpandsPath()
     {
         var (_, main, _) = await Open();
         main.SelectedNode = main.FindNode(NavKind.Assets, "PLC01");
@@ -228,7 +228,7 @@ public sealed class MainWindowTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task Asignar_una_operacion_desde_la_ficha_se_ve_en_el_arbol()
+    public async Task AssignOperation_FromForm_ShowsInTree()
     {
         var (_, main, _) = await Open();
         main.SelectedNode = main.FindNode(NavKind.Operations, "PLC01");
@@ -249,7 +249,7 @@ public sealed class MainWindowTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task Arrastrar_una_operacion_cambia_el_orden_y_se_puede_volver_al_de_numero()
+    public async Task MoveOperation_Drag_ReordersAndCanReset()
     {
         var (_, main, _) = await Open();
         var plc = main.Session.Project.Plcs[0];
@@ -273,7 +273,7 @@ public sealed class MainWindowTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task Arrastrar_con_el_raton_una_operacion_la_lleva_a_otra_posicion()
+    public async Task DragOperation_Mouse_MovesToPosition()
     {
         var (window, main, _) = await Open();
         main.Session.Project.Plcs[0].Operations.Add(new Operation { Id = "90" });
@@ -300,7 +300,7 @@ public sealed class MainWindowTests : IDisposable
         main.Session.Project.Plcs[0].FindAsset(element)!.Variables.Select(v => v.Name).ToList();
 
     [AvaloniaFact]
-    public async Task Con_mayus_clic_se_seleccionan_varias_variables_y_se_arrastran_a_otro_asset()
+    public async Task DragVariables_ShiftClick_MovesSeveralToAsset()
     {
         var (window, main, _) = await Open();
         main.SelectedNode = main.FindNode(NavKind.Assets, "PLC01");
@@ -335,7 +335,7 @@ public sealed class MainWindowTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task Borrar_varias_variables_de_golpe_se_deshace_de_una_vez()
+    public async Task DeleteVariables_Several_UndoesAtOnce()
     {
         var (_, main, _) = await Open();
         main.SelectedNode = main.FindNode(NavKind.Assets, "PLC01");
@@ -351,7 +351,7 @@ public sealed class MainWindowTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task Mover_una_variable_que_el_destino_ya_tiene_avisa_y_no_la_mueve()
+    public async Task MoveVariable_TargetHasIt_WarnsAndKeeps()
     {
         var (_, main, dialogs) = await Open();
         main.SelectedNode = main.FindNode(NavKind.Assets, "PLC01");
@@ -369,7 +369,7 @@ public sealed class MainWindowTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task Al_reimportar_la_LoS_se_pregunta_por_cada_variable_movida()
+    public async Task ImportLos_MovedVariables_AsksForEach()
     {
         var (_, main, dialogs) = await Open();
         main.SelectedNode = main.FindNode(NavKind.Assets, "PLC01");
@@ -390,7 +390,7 @@ public sealed class MainWindowTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task En_el_catalogo_se_aprende_un_tipo_de_un_FB_eligiendo_la_llamada()
+    public async Task LearnType_FbWithCalls_UsesChosenCall()
     {
         var (_, main, dialogs) = await Open();
         var generate = new GenerateViewModel(main, main.Session.Project.Plcs[0]);
@@ -414,7 +414,7 @@ public sealed class MainWindowTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task Leer_FB_LoS_desde_TIA_adapta_el_proyecto_y_recuerda_el_bloque()
+    public async Task ReadFbFromTia_Block_AdaptsProjectAndRemembersLink()
     {
         var tia = new FakeTia();
         var (_, main, dialogs) = await Open(tia: tia);
@@ -446,7 +446,7 @@ public sealed class MainWindowTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task Subir_a_TIA_no_pisa_un_FB_cambiado_alli_a_mano()
+    public async Task UploadToTia_FbChangedInTia_Refuses()
     {
         var tia = new FakeTia();
         var (_, main, dialogs) = await Open(tia: tia);
@@ -462,7 +462,7 @@ public sealed class MainWindowTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task Subir_a_TIA_sube_UDT_y_FB_y_guarda_como_FB_actual_el_de_TIA()
+    public async Task UploadToTia_UdtsAndFb_StoresTiaFbAsCurrent()
     {
         var tia = new FakeTia();
         var (_, main, dialogs) = await Open(tia: tia);
@@ -500,7 +500,7 @@ public sealed class MainWindowTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task El_comentario_de_una_operacion_cambia_su_titulo()
+    public async Task OperationComment_Changed_UpdatesTitle()
     {
         var (_, main, _) = await Open();
         main.SelectedNode = main.FindNode(NavKind.Operations, "PLC01");
@@ -513,7 +513,7 @@ public sealed class MainWindowTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task Generar_escribe_el_FB_y_los_UDT_en_la_carpeta_de_salida()
+    public async Task SaveFiles_OutputFolder_WritesFbAndUdts()
     {
         var (_, main, dialogs) = await Open();
         var output = Path.Combine(_dir, "salida");
@@ -530,7 +530,7 @@ public sealed class MainWindowTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task Guardar_y_abrir_el_proyecto()
+    public async Task SaveAndOpen_Project_RoundTrips()
     {
         var (_, main, dialogs) = await Open();
         var path = Path.Combine(_dir, "LX9.losproj");
@@ -549,7 +549,7 @@ public sealed class MainWindowTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task Los_avisos_llevan_a_lo_que_los_provoca()
+    public async Task OpenIssue_Warning_SelectsSource()
     {
         var (_, main, _) = await Open();
 
@@ -562,7 +562,7 @@ public sealed class MainWindowTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task Acerca_de_muestra_el_autor()
+    public async Task About_Always_ShowsAuthor()
     {
         var (_, main, dialogs) = await Open();
 
@@ -572,7 +572,7 @@ public sealed class MainWindowTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task Avisa_si_hay_una_release_mas_nueva()
+    public async Task CheckForUpdates_NewerRelease_ShowsNotice()
     {
         var (window, main, _) = await Open();
 

@@ -8,17 +8,17 @@ public class UpdateCheckTests
     [InlineData("v1.2.3", "1.2.3")]
     [InlineData("1.2", "1.2.0")]
     [InlineData("V2.0.1-beta", "2.0.1")]
-    public void Lee_la_version_de_la_etiqueta(string tag, string expected) =>
+    public void ParseVersion_Tag_ReturnsVersion(string tag, string expected) =>
         Assert.Equal(Version.Parse(expected), UpdateCheck.ParseVersion(tag));
 
     [Theory]
     [InlineData("")]
     [InlineData("ultima")]
     [InlineData("v1.x")]
-    public void Una_etiqueta_sin_version_no_cuenta(string tag) => Assert.Null(UpdateCheck.ParseVersion(tag));
+    public void ParseVersion_NoVersion_ReturnsNull(string tag) => Assert.Null(UpdateCheck.ParseVersion(tag));
 
     [Fact]
-    public void Compara_la_release_con_la_version_de_la_app()
+    public void IsNewer_ReleaseAndAppVersion_Compares()
     {
         var release = UpdateCheck.Parse("""{"tag_name":"v0.2.0","html_url":"https://github.com/x/y/releases/tag/v0.2.0"}""")!;
 
@@ -29,7 +29,7 @@ public class UpdateCheckTests
     }
 
     [Fact]
-    public void Una_respuesta_que_no_se_entiende_no_dice_nada()
+    public void Parse_InvalidResponse_ReturnsNull()
     {
         Assert.Null(UpdateCheck.Parse("{\"message\":\"Not Found\"}"));
         Assert.Null(UpdateCheck.Parse("no es json"));
