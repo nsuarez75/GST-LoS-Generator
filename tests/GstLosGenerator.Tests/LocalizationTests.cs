@@ -7,7 +7,7 @@ public partial class LocalizationTests
 {
     // Todo texto de la interfaz, en el código (L.T("...")) o en las vistas ({l:T '...'}), tiene traducción al inglés.
     [Fact]
-    public void Todos_los_textos_tienen_traduccion_al_ingles()
+    public void Texts_AllSources_HaveEnglishTranslation()
     {
         var src = Path.Combine(RepoRoot(), "src");
         var keys = new SortedSet<string>(StringComparer.Ordinal);
